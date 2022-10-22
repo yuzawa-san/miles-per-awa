@@ -15,7 +15,7 @@ apply plugin: "jacoco"
 sourceCompatibility = 17
 targetCompatibility = 17
 
-description="Persistently maintain multiple Chromecasts as digital signage without a browser."
+description="The most accurate personal race course tracker."
 
 repositories {
 	mavenCentral()
@@ -45,7 +45,6 @@ licenseReport {
 spotless {
 	java {
 		target '**/*.java'
-		targetExclude "${protobuf.generatedFilesBaseDir}/**/*.java"
 		licenseHeader '/*\n * Copyright (c) $YEAR James Yuzawa (https://www.jyuzawa.com/)\n * All rights reserved. Licensed under the MIT License.\n */'
 		removeUnusedImports()
 		importOrder()
@@ -66,10 +65,11 @@ spotless {
 }
 
 dependencies {
-	implementation(platform('org.apache.logging.log4j:log4j-bom:2.19.0'))
-	runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
-	implementation 'org.slf4j:slf4j-api:2.0.3'
-	implementation 'org.springframework.boot:spring-boot-starter-webflux:2.7.5'
+	implementation(platform('org.springframework.boot:spring-boot-dependencies:2.7.5'))
+	implementation('org.springframework.boot:spring-boot-starter-webflux'){
+		exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+	}
+	implementation('org.springframework.boot:spring-boot-starter-log4j2')
 	testImplementation 'org.mockito:mockito-core:4.8.0'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.1'
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.1'
@@ -89,19 +89,21 @@ def getGitHash = { ->
 	return stdout.toString().trim()
 }
 
-mainClassName = 'com.jyuzawa.googolplex_theater.GoogolplexTheater'
+mainClassName = 'com.jyuzawa.miles_per_awa.MilesPerAwa'
 
 jar {
-	manifest {
-		attributes(
-			'Built-By'               : System.properties['user.name'],
-			'Build-Timestamp'        : new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(new Date()),
-			'Specification-Version'  : project.version,
-			'Implementation-Version' : "${-> getGitHash()}",
-			'Created-By'             : "Gradle ${gradle.gradleVersion}",
-			'Build-Jdk'              : "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})",
-			'Build-OS'               : "${System.properties['os.name']} ${System.properties['os.arch']} ${System.properties['os.version']}"
-		)
+	doFirst {
+		manifest {
+			attributes(
+				'Built-By'               : System.properties['user.name'],
+				'Build-Timestamp'        : new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(new Date()),
+				'Specification-Version'  : project.version,
+				'Implementation-Version' : "${-> getGitHash()}",
+				'Created-By'             : "Gradle ${gradle.gradleVersion}",
+				'Build-Jdk'              : "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})",
+				'Build-OS'               : "${System.properties['os.name']} ${System.properties['os.arch']} ${System.properties['os.version']}"
+			)
+		}
 	}
 }
 jar.dependsOn(generateLicenseReport)
