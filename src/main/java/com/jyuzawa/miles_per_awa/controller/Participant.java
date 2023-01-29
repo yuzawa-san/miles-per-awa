@@ -14,6 +14,9 @@ import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public final class Participant {
     // empirically determined for biking and running
     private static final long TIMEBUCKET_SECONDS = 30;

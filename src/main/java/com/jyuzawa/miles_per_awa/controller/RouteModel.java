@@ -16,7 +16,7 @@ import com.jyuzawa.miles_per_awa.model.Datapoint;
 public class RouteModel {
 	private final Route route;
 	
-	public RouteModel(@Value("route.path") String rawPath) throws IOException {
+	public RouteModel(@Value("${route.path}") String rawPath) throws IOException {
 		List<String> lines = Files.readAllLines(new File(rawPath).toPath());
         List<LatLng> points = new ArrayList<>();
         boolean header = true;

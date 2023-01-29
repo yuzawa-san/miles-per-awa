@@ -65,15 +65,15 @@ spotless {
 }
 
 dependencies {
-	implementation(platform('org.springframework.boot:spring-boot-dependencies:2.7.5'))
+	implementation(platform('org.springframework.boot:spring-boot-dependencies:3.0.2'))
 	implementation('org.springframework.boot:spring-boot-starter-webflux'){
 		exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
 	}
 	implementation('org.springframework.boot:spring-boot-starter-log4j2')
-	testImplementation 'org.mockito:mockito-core:4.8.0'
-	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.1'
-	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.1'
-	testImplementation 'org.junit.platform:junit-platform-suite:1.9.1'
+	testImplementation 'org.mockito:mockito-core:5.0.0'
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
+	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
+	testImplementation 'org.junit.platform:junit-platform-suite:1.9.2'
 	testImplementation('org.springframework.boot:spring-boot-starter-test'){
 		exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
 	}
