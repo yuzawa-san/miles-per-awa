@@ -4,8 +4,8 @@
  */
 package com.jyuzawa.miles_per_awa.dto;
 
-import com.jyuzawa.miles_per_awa.controller.LatLng;
-import com.jyuzawa.miles_per_awa.model.Datapoint;
+import com.jyuzawa.miles_per_awa.entity.Datapoint;
+import com.jyuzawa.miles_per_awa.entity.LatLng;
 import java.time.Instant;
 import java.util.List;
 import lombok.Builder;
@@ -36,11 +36,17 @@ public final class OverlandRequest {
         }
 
         public Datapoint toPoint(OverlandLocation start) {
-            double heading = OverlandGeometry.bearingInDegrees(start.getGeometry(), geometry);
+            Instant startTimestamp = start.getProperties().getTimestamp();
+            LatLng startLatLng = start.getGeometry().getLatLng();
+            Instant timestamp = properties.getTimestamp();
+            LatLng latLng = geometry.getLatLng();
+            double heading = startLatLng.heading(latLng);
             return Datapoint.builder()
-                    .timestamp(properties.getTimestamp())
-                    .coords(new LatLng(geometry.getLatitude(), geometry.getLongitude()))
+                    .timestamp(timestamp)
+                    .coords(latLng)
                     .heading(heading)
+                    .velocity(startLatLng.distance(latLng)
+                            / (timestamp.getEpochSecond() - startTimestamp.getEpochSecond()))
                     .build();
         }
     }
@@ -56,26 +62,8 @@ public final class OverlandRequest {
             return "Point".equals(type) && coordinates != null && coordinates.size() == 2;
         }
 
-        static double bearingInRadians(OverlandGeometry src, OverlandGeometry dst) {
-            double srcLat = Math.toRadians(src.getLatitude());
-            double dstLat = Math.toRadians(dst.getLatitude());
-            double dLng = Math.toRadians(dst.getLongitude() - src.getLongitude());
-
-            return Math.atan2(
-                    Math.sin(dLng) * Math.cos(dstLat),
-                    Math.cos(srcLat) * Math.sin(dstLat) - Math.sin(srcLat) * Math.cos(dstLat) * Math.cos(dLng));
-        }
-
-        static double bearingInDegrees(OverlandGeometry src, OverlandGeometry dst) {
-            return Math.toDegrees((bearingInRadians(src, dst) + Math.PI) % Math.PI);
-        }
-
-        public double getLatitude() {
-            return coordinates.get(0);
-        }
-
-        public double getLongitude() {
-            return coordinates.get(1);
+        public LatLng getLatLng() {
+            return new LatLng(coordinates.get(0), coordinates.get(0));
         }
     }
 

@@ -14,7 +14,7 @@ import lombok.extern.jackson.Jacksonized;
 @Builder
 @Value
 public final class LocationsResponse {
-    private final List<PersonLocation> points;
+    private final List<PersonLocation> people;
 
     @Jacksonized
     @Builder

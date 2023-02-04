@@ -2,9 +2,8 @@
  * Copyright (c) 2022 James Yuzawa (https://www.jyuzawa.com/)
  * All rights reserved. Licensed under the MIT License.
  */
-package com.jyuzawa.miles_per_awa.model;
+package com.jyuzawa.miles_per_awa.entity;
 
-import com.jyuzawa.miles_per_awa.controller.LatLng;
 import java.time.Instant;
 import lombok.Builder;
 import lombok.Data;

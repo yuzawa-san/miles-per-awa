@@ -2,14 +2,11 @@
  * Copyright (c) 2022 James Yuzawa (https://www.jyuzawa.com/)
  * All rights reserved. Licensed under the MIT License.
  */
-package com.jyuzawa.miles_per_awa.controller;
+package com.jyuzawa.miles_per_awa.entity;
 
 public record LatLng(double latitude, double longitude) {
 
     static double EARTH_RADIUS = 6371000;
-
-    static double DEG_TO_RAD = 0.0174532925199;
-    static double RAD_TO_DEG = 57.295779513082320876;
 
     // https://stackoverflow.com/questions/3694380/calculating-distance-between-two-points-using-latitude-longitude
     static double distance(LatLng src, LatLng dst) {
