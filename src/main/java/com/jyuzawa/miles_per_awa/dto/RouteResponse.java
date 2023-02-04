@@ -4,7 +4,9 @@
  */
 package com.jyuzawa.miles_per_awa.dto;
 
+import java.math.BigDecimal;
 import java.util.List;
+
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.jackson.Jacksonized;
@@ -16,5 +18,5 @@ public final class RouteResponse {
     private final String name;
     private final boolean imperialUnits;
     private final int intervalMeters;
-    private final List<Float> points;
+    private final List<BigDecimal> rawPath;
 }

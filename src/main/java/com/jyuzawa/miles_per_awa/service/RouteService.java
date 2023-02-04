@@ -4,36 +4,52 @@
  */
 package com.jyuzawa.miles_per_awa.service;
 
-import com.jyuzawa.miles_per_awa.entity.Datapoint;
-import com.jyuzawa.miles_per_awa.entity.LatLng;
-import com.jyuzawa.miles_per_awa.entity.RoutePoint;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import lombok.Getter;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.jyuzawa.miles_per_awa.entity.Datapoint;
+import com.jyuzawa.miles_per_awa.entity.LatLng;
+import com.jyuzawa.miles_per_awa.entity.RoutePoint;
+
+import lombok.Getter;
+
 @Component
 public final class RouteService {
-    public static final int NORMAL_PATH_METERS = 25;
     private final List<RoutePoint> normalPath;
 
     @Getter
     private final String name;
+    
+    @Getter
+    private final boolean imperialUnits;
+    
+    @Getter
+    private final int intervalMeters;
+    
+    @Getter
+    private final List<BigDecimal> rawPath;
 
     @Autowired
-    public RouteService(@Value("${route.name}") String name, RoutePointsService routePointsService) {
-        this(name, routePointsService.getPoints());
+    public RouteService(@Value("${route.name}") String name, @Value("${route.imperialUnits:false}") boolean imperialUnits, @Value("${route.intervalMeters:25}") int intervalMeters, RoutePointsService routePointsService) {
+        this(name, imperialUnits, intervalMeters, routePointsService.getPoints());
     }
 
-    public RouteService(String name, List<LatLng> points) {
+    public RouteService(String name, boolean imperialUnits, int intervalMeters, List<LatLng> points) {
         this.name = name;
+        this.imperialUnits = imperialUnits;
+        this.intervalMeters = intervalMeters;
         double dist = 0;
         double[] deltas = new double[points.size()];
+        List<BigDecimal> rawPath = new ArrayList<>(points.size() * 2);
         deltas[0] = 0;
         for (int i = 1; i < points.size(); i++) {
             LatLng prev = points.get(i - 1);
@@ -50,17 +66,20 @@ public final class RouteService {
             RoutePoint prev = normalPath.get(i - 1);
             double heading = prev.coords().heading(loc);
             normalPath.add(new RoutePoint(loc, i, heading));
+            rawPath.add(new BigDecimal(loc.latitude()).setScale(5, RoundingMode.DOWN));
+            rawPath.add(new BigDecimal(loc.longitude()).setScale(5, RoundingMode.DOWN));
             i++;
-            offset = i * NORMAL_PATH_METERS;
+            offset = i * intervalMeters;
         }
         this.normalPath = Collections.unmodifiableList(normalPath);
+        this.rawPath = Collections.unmodifiableList(rawPath);
     }
 
     public Optional<RoutePoint> getClosest(Datapoint datapoint) {
         LatLng coords = datapoint.getCoords();
         List<RoutePoint> candidates = normalPath.stream()
                 .map(routePoint -> new Candidate(routePoint, coords.distance(routePoint.coords())))
-                .filter(candidate -> candidate.distance() < NORMAL_PATH_METERS / 2)
+                .filter(candidate -> candidate.distance() < intervalMeters / 2)
                 .sorted(Comparator.comparing(Candidate::distance))
                 .map(Candidate::routePoint)
                 .toList();

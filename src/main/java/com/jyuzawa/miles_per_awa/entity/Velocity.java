@@ -6,4 +6,4 @@ package com.jyuzawa.miles_per_awa.entity;
 
 import java.time.Instant;
 
-public record Velocity(Instant timestamp, double offset, double lastVelocity, double velocity) {}
+public record Velocity(Instant timestamp, int index, double lastVelocity, double velocity) {}

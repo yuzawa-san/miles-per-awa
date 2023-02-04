@@ -4,8 +4,8 @@
  */
 package com.jyuzawa.miles_per_awa.dto;
 
-import java.time.Instant;
 import java.util.List;
+
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.jackson.Jacksonized;
@@ -21,8 +21,8 @@ public final class LocationsResponse {
     @Value
     public static final class PersonLocation {
         private final String name;
-        private final int offsetMeters;
+        private final int index;
         private final float velocity;
-        private final Instant timestamp;
+        private final long timestampMs;
     }
 }

@@ -4,6 +4,13 @@
  */
 package com.jyuzawa.miles_per_awa.controller;
 
+import java.util.List;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.jyuzawa.miles_per_awa.dto.LocationsRequest;
 import com.jyuzawa.miles_per_awa.dto.LocationsResponse;
 import com.jyuzawa.miles_per_awa.dto.LocationsResponse.PersonLocation;
@@ -11,13 +18,8 @@ import com.jyuzawa.miles_per_awa.dto.RouteResponse;
 import com.jyuzawa.miles_per_awa.entity.Velocity;
 import com.jyuzawa.miles_per_awa.service.RouteService;
 import com.jyuzawa.miles_per_awa.service.VelocityService;
-import java.util.Collections;
-import java.util.List;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
 @RestController
@@ -30,8 +32,9 @@ public class MainController {
     public RouteResponse route() {
         return RouteResponse.builder()
                 .name(routeService.getName())
-                .intervalMeters(100)
-                .points(Collections.emptyList())
+                .imperialUnits(routeService.isImperialUnits())
+                .intervalMeters(routeService.getIntervalMeters())
+                .rawPath(routeService.getRawPath())
                 .build();
     }
 
@@ -42,8 +45,8 @@ public class MainController {
                     Velocity velocity = entry.getValue();
                     return PersonLocation.builder()
                             .name(entry.getKey())
-                            .offsetMeters((int) velocity.offset())
-                            .timestamp(velocity.timestamp())
+                            .index(velocity.index())
+                            .timestampMs(velocity.timestamp().toEpochMilli())
                             .build();
                 })
                 .toList();

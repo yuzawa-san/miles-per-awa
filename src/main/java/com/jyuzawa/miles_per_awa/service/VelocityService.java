@@ -4,9 +4,6 @@
  */
 package com.jyuzawa.miles_per_awa.service;
 
-import com.jyuzawa.miles_per_awa.entity.Datapoint;
-import com.jyuzawa.miles_per_awa.entity.LatLng;
-import com.jyuzawa.miles_per_awa.entity.Velocity;
 import java.io.File;
 import java.nio.file.Files;
 import java.time.Instant;
@@ -17,8 +14,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import com.jyuzawa.miles_per_awa.entity.Datapoint;
+import com.jyuzawa.miles_per_awa.entity.LatLng;
+import com.jyuzawa.miles_per_awa.entity.Velocity;
 
 @Component
 public final class VelocityService {
@@ -50,7 +52,7 @@ public final class VelocityService {
         return out;
     }
 
-    public Velocity calculate(String user, Datapoint datapoint, double offset) {
+    public Velocity calculate(String user, Datapoint datapoint, int index) {
         return users.compute(user, (u, old) -> {
             Instant timestamp = datapoint.getTimestamp();
             double newVelocity = datapoint.getVelocity();
@@ -68,7 +70,7 @@ public final class VelocityService {
                 v = old.velocity();
                 oldTimestamp = old.timestamp();
                 if (newVelocity < MIN_VELOCITY) {
-                    return new Velocity(timestamp, offset, 0, v);
+                    return new Velocity(timestamp, index, 0, v);
                 }
             }
             long oldTimebucket = oldTimestamp.getEpochSecond() / TIMEBUCKET_SECONDS;
@@ -77,7 +79,7 @@ public final class VelocityService {
                 // exponentially weighted moving average
                 v = newVelocity * ALPHA + v * (1 - ALPHA);
             }
-            return new Velocity(timestamp, offset, newVelocity, v);
+            return new Velocity(timestamp, index, newVelocity, v);
         });
     }
 
@@ -96,14 +98,12 @@ public final class VelocityService {
             String[] pieces = line.split(",");
             points.add(new LatLng(Double.parseDouble(pieces[0]), Double.parseDouble(pieces[1])));
         }
-        RouteService route = new RouteService("", points);
+        RouteService route = new RouteService("",25, points);
         // Optional<RoutePoint> closest = route.getClosest(new LatLng(41.78820254440553,-72.63131040977898),30d);
         // System.out.println(closest);
         VelocityService x = new VelocityService();
         IngestService i = new IngestService(route, x);
         header = true;
-        Instant prevInstant = null;
-        LatLng prev = null;
         for (String line : participantLines) {
             if (header) {
                 header = false;
@@ -120,8 +120,6 @@ public final class VelocityService {
             //                v = 0;
             //            }
             v = Double.parseDouble(pieces[4]);
-            prev = coords;
-            prevInstant = instant;
             Double heading = Double.parseDouble(pieces[3]);
             i.ingest(
                             "james",
@@ -133,7 +131,7 @@ public final class VelocityService {
                                     .build())
                     .ifPresent(w -> {
                         System.out.println(w.timestamp().getEpochSecond() + "\t" + w.lastVelocity() + "\t"
-                                + w.velocity() + "\t" + w.offset());
+                                + w.velocity() + "\t" + w.index()*route.getIntervalMeters());
                     });
         }
     }
