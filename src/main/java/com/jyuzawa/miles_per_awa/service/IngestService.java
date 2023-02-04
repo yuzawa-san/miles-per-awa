@@ -4,14 +4,11 @@
  */
 package com.jyuzawa.miles_per_awa.service;
 
-import java.util.Optional;
-
-import org.springframework.stereotype.Component;
-
 import com.jyuzawa.miles_per_awa.entity.Datapoint;
 import com.jyuzawa.miles_per_awa.entity.Velocity;
-
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 @RequiredArgsConstructor
 @Component

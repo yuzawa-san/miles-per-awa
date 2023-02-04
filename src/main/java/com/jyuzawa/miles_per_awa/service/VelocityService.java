@@ -4,6 +4,9 @@
  */
 package com.jyuzawa.miles_per_awa.service;
 
+import com.jyuzawa.miles_per_awa.entity.Datapoint;
+import com.jyuzawa.miles_per_awa.entity.LatLng;
+import com.jyuzawa.miles_per_awa.entity.Velocity;
 import java.io.File;
 import java.nio.file.Files;
 import java.time.Instant;
@@ -14,13 +17,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import com.jyuzawa.miles_per_awa.entity.Datapoint;
-import com.jyuzawa.miles_per_awa.entity.LatLng;
-import com.jyuzawa.miles_per_awa.entity.Velocity;
 
 @Component
 public final class VelocityService {
@@ -98,7 +96,7 @@ public final class VelocityService {
             String[] pieces = line.split(",");
             points.add(new LatLng(Double.parseDouble(pieces[0]), Double.parseDouble(pieces[1])));
         }
-        RouteService route = new RouteService("",false,25, points);
+        RouteService route = new RouteService("", false, 25, points);
         // Optional<RoutePoint> closest = route.getClosest(new LatLng(41.78820254440553,-72.63131040977898),30d);
         // System.out.println(closest);
         VelocityService x = new VelocityService();
@@ -131,7 +129,7 @@ public final class VelocityService {
                                     .build())
                     .ifPresent(w -> {
                         System.out.println(w.timestamp().getEpochSecond() + "\t" + w.lastVelocity() + "\t"
-                                + w.velocity() + "\t" + w.index()*route.getIntervalMeters());
+                                + w.velocity() + "\t" + w.index() * route.getIntervalMeters());
                     });
         }
     }

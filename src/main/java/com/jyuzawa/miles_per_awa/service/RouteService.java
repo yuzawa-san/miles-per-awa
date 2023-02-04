@@ -4,6 +4,9 @@
  */
 package com.jyuzawa.miles_per_awa.service;
 
+import com.jyuzawa.miles_per_awa.entity.Datapoint;
+import com.jyuzawa.miles_per_awa.entity.LatLng;
+import com.jyuzawa.miles_per_awa.entity.RoutePoint;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -11,16 +14,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import com.jyuzawa.miles_per_awa.entity.Datapoint;
-import com.jyuzawa.miles_per_awa.entity.LatLng;
-import com.jyuzawa.miles_per_awa.entity.RoutePoint;
-
-import lombok.Getter;
 
 @Component
 public final class RouteService {
@@ -28,18 +25,22 @@ public final class RouteService {
 
     @Getter
     private final String name;
-    
+
     @Getter
     private final boolean imperialUnits;
-    
+
     @Getter
     private final int intervalMeters;
-    
+
     @Getter
     private final List<BigDecimal> rawPath;
 
     @Autowired
-    public RouteService(@Value("${route.name}") String name, @Value("${route.imperialUnits:false}") boolean imperialUnits, @Value("${route.intervalMeters:25}") int intervalMeters, RoutePointsService routePointsService) {
+    public RouteService(
+            @Value("${route.name}") String name,
+            @Value("${route.imperialUnits:false}") boolean imperialUnits,
+            @Value("${route.intervalMeters:25}") int intervalMeters,
+            RoutePointsService routePointsService) {
         this(name, imperialUnits, intervalMeters, routePointsService.getPoints());
     }
 
