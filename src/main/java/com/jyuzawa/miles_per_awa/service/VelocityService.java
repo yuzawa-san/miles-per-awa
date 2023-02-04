@@ -98,7 +98,7 @@ public final class VelocityService {
             String[] pieces = line.split(",");
             points.add(new LatLng(Double.parseDouble(pieces[0]), Double.parseDouble(pieces[1])));
         }
-        RouteService route = new RouteService("",25, points);
+        RouteService route = new RouteService("",false,25, points);
         // Optional<RoutePoint> closest = route.getClosest(new LatLng(41.78820254440553,-72.63131040977898),30d);
         // System.out.println(closest);
         VelocityService x = new VelocityService();

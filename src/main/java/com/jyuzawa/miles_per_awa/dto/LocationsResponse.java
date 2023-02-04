@@ -22,7 +22,7 @@ public final class LocationsResponse {
     public static final class PersonLocation {
         private final String name;
         private final int index;
-        private final float velocity;
+        private final double velocity;
         private final long timestampMs;
     }
 }

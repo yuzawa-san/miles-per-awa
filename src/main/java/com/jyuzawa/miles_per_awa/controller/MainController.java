@@ -4,6 +4,7 @@
  */
 package com.jyuzawa.miles_per_awa.controller;
 
+import java.time.Instant;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.GetMapping;
@@ -47,9 +48,16 @@ public class MainController {
                             .name(entry.getKey())
                             .index(velocity.index())
                             .timestampMs(velocity.timestamp().toEpochMilli())
+                            .velocity(velocity.velocity())
                             .build();
                 })
                 .toList();
+        personLocations = List.of(PersonLocation.builder()
+                            .name("james")
+                            .index(10)
+                            .timestampMs(Instant.now().toEpochMilli())
+                            .velocity(2.32f)
+                            .build());
         return LocationsResponse.builder().people(personLocations).build();
     }
 }
