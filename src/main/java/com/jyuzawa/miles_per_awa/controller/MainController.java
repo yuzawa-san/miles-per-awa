@@ -11,7 +11,6 @@ import com.jyuzawa.miles_per_awa.dto.RouteResponse;
 import com.jyuzawa.miles_per_awa.entity.Velocity;
 import com.jyuzawa.miles_per_awa.service.RouteService;
 import com.jyuzawa.miles_per_awa.service.VelocityService;
-import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -49,12 +48,6 @@ public class MainController {
                             .build();
                 })
                 .toList();
-        personLocations = List.of(PersonLocation.builder()
-                .name("james")
-                .index(10)
-                .timestampMs(Instant.now().toEpochMilli())
-                .velocity(2.32f)
-                .build());
         return LocationsResponse.builder().people(personLocations).build();
     }
 }

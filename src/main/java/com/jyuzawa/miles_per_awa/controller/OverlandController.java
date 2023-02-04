@@ -14,11 +14,8 @@ import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
@@ -26,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class OverlandController {
 
-    private static final Duration DURATION = Duration.ofMinutes(1);
+    private static final Duration MAX_LOOKBACK = Duration.ofMinutes(1);
 
     private final IngestService ingestService;
 
@@ -36,7 +33,8 @@ public class OverlandController {
         if (locations == null) {
             return SuccessResponse.builder().status("empty").build();
         }
-        Instant minTimestamp = locations.get(0).getProperties().getTimestamp().minus(DURATION);
+        OverlandLocation lastLocation = locations.get(locations.size() - 1);
+        Instant minTimestamp = lastLocation.getProperties().getTimestamp().minus(MAX_LOOKBACK);
         locations = locations.stream()
                 .filter(OverlandLocation::isValid)
                 .filter(location -> location.getProperties().getTimestamp().isAfter(minTimestamp))
@@ -48,14 +46,7 @@ public class OverlandController {
         OverlandLocation last = locations.get(locations.size() - 1);
         Datapoint point = last.toPoint(first);
         log.info(point.toString());
-        // TODO: fix id
-        ingestService.ingest("user", point);
+        ingestService.ingest(lastLocation.getProperties().getDevice_id(), point);
         return SuccessResponse.builder().status("ok").build();
-    }
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public void handle(Exception e) {
-        log.warn("Returning HTTP 400 Bad Request", e);
     }
 }

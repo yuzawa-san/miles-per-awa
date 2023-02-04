@@ -23,14 +23,7 @@ public record LatLng(double latitude, double longitude) {
                         * Math.sin(lonDistance / 2)
                         * Math.sin(lonDistance / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        double distance = EARTH_RADIUS * c; // convert to meters
-
-        return distance;
-        //    	    double height = el1 - el2;
-        //
-        //    	    distance = Math.pow(distance, 2) + Math.pow(height, 2);
-
-        // return Math.sqrt(distance);
+        return EARTH_RADIUS * c;
     }
 
     public double distance(LatLng dst) {
