@@ -1,4 +1,4 @@
-fetch("/route")
+fetch("./route")
 	.then((response) => response.json())
 	.then((input) => {
 		let points = {};
@@ -172,7 +172,7 @@ fetch("/route")
 			const nowMs = now();
 			if ((nowMs - lastLoadMs) > 15000) {
 				lastLoadMs = nowMs;
-				fetch("/locations", {
+				fetch("./locations", {
 						method: 'POST',
 						headers: {
 							'Content-Type': 'application/json'
