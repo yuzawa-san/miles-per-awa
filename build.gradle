@@ -35,7 +35,7 @@ jacocoTestReport {
 		html.required = true
 	}
 }
-check.dependsOn jacocoTestReport
+test.finalizedBy jacocoTestReport
 
 
 licenseReport {
