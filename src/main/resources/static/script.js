@@ -43,6 +43,7 @@ fetch("./route")
 		const locationCircle = L.circle([0, 0], 1);
 		locationCircle.addTo(map);
 		map.locate({
+			maximumAge: 15000,
 			setView: false,
 			watch: true
 		});
