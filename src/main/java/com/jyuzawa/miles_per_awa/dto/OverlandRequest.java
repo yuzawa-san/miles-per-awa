@@ -63,7 +63,7 @@ public final class OverlandRequest {
         }
 
         public LatLng getLatLng() {
-            return new LatLng(coordinates.get(0), coordinates.get(0));
+            return new LatLng(coordinates.get(1), coordinates.get(0));
         }
     }
 

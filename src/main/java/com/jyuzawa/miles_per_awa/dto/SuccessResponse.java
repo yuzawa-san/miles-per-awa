@@ -12,5 +12,5 @@ import lombok.extern.jackson.Jacksonized;
 @Builder
 @Value
 public final class SuccessResponse {
-    private final String status;
+    private final String result;
 }
