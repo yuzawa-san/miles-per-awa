@@ -7,7 +7,9 @@ package com.jyuzawa.miles_per_awa.entity;
 import java.time.Instant;
 import lombok.Builder;
 import lombok.Data;
+import lombok.extern.jackson.Jacksonized;
 
+@Jacksonized
 @Builder
 @Data
 public final class Datapoint {

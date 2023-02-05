@@ -5,16 +5,11 @@
 package com.jyuzawa.miles_per_awa.service;
 
 import com.jyuzawa.miles_per_awa.entity.Datapoint;
-import com.jyuzawa.miles_per_awa.entity.LatLng;
 import com.jyuzawa.miles_per_awa.entity.Velocity;
-import java.io.File;
-import java.nio.file.Files;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,58 +74,5 @@ public final class VelocityService {
             }
             return new Velocity(timestamp, index, newVelocity, v);
         });
-    }
-
-    public static void main(String[] args) throws Exception {
-
-        List<String> routeLines = Files.readAllLines(new File("/Users/jtyuzawa/Documents/nyc.csv").toPath());
-        List<String> participantLines =
-                Files.readAllLines(new File("/Users/jtyuzawa/Documents/nyc_locations.csv").toPath());
-        List<LatLng> points = new ArrayList<>();
-        boolean header = true;
-        for (String line : routeLines) {
-            if (header) {
-                header = false;
-                continue;
-            }
-            String[] pieces = line.split(",");
-            points.add(new LatLng(Double.parseDouble(pieces[0]), Double.parseDouble(pieces[1])));
-        }
-        RouteService route = new RouteService("", false, 25, points);
-        // Optional<RoutePoint> closest = route.getClosest(new LatLng(41.78820254440553,-72.63131040977898),30d);
-        // System.out.println(closest);
-        VelocityService x = new VelocityService();
-        IngestService i = new IngestService(route, x);
-        header = true;
-        for (String line : participantLines) {
-            if (header) {
-                header = false;
-                continue;
-            }
-            String[] pieces = line.split(",");
-            long ms = Long.parseLong(pieces[0]);
-            Instant instant = Instant.ofEpochMilli(ms);
-            LatLng coords = new LatLng(Double.parseDouble(pieces[1]), Double.parseDouble(pieces[2]));
-            final double v;
-            //            if (prev != null) {
-            //                v = prev.distance(coords) / (instant.getEpochSecond() - prevInstant.getEpochSecond());
-            //            } else {
-            //                v = 0;
-            //            }
-            v = Double.parseDouble(pieces[4]);
-            Double heading = Double.parseDouble(pieces[3]);
-            i.ingest(
-                            "james",
-                            Datapoint.builder()
-                                    .coords(coords)
-                                    .timestamp(instant)
-                                    .heading(heading)
-                                    .velocity(v)
-                                    .build())
-                    .ifPresent(w -> {
-                        System.out.println(w.timestamp().getEpochSecond() + "\t" + w.lastVelocity() + "\t"
-                                + w.velocity() + "\t" + w.index() * route.getIntervalMeters());
-                    });
-        }
     }
 }

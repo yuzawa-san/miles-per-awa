@@ -5,6 +5,7 @@
 package com.jyuzawa.miles_per_awa;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.jyuzawa.miles_per_awa.dto.LocationsRequest;
 import com.jyuzawa.miles_per_awa.dto.LocationsResponse;
@@ -42,7 +43,7 @@ public class MilesPerAwaTest {
             RoutePointsService mock = Mockito.mock(RoutePointsService.class);
             Mockito.when(mock.getPoints())
                     .thenReturn(
-                            List.of(new LatLng(10d, 10.0d), new LatLng(10.0d, 10.001d), new LatLng(10.001d, 10.001d)));
+                            List.of(new LatLng(10d, 10.0d), new LatLng(10.0d, 10.005d), new LatLng(10.00d, 10.000d)));
             return mock;
         }
     }
@@ -64,6 +65,50 @@ public class MilesPerAwaTest {
 
     @Test
     public void testOverland() {
+        OverlandLocation o1 = OverlandLocation.builder()
+                .type("Feature")
+                .properties(OverlandProperties.builder()
+                        .device_id("james")
+                        .horizontal_accuracy(16)
+                        .timestamp(Instant.now().minusSeconds(20))
+                        .build())
+                .geometry(OverlandGeometry.builder()
+                        .type("Point")
+                        .coordinates(List.of(9.001d, 10d))
+                        .build())
+                .build();
+        OverlandLocation o2 = OverlandLocation.builder()
+                .type("Feature")
+                .properties(OverlandProperties.builder()
+                        .device_id("james")
+                        .horizontal_accuracy(16)
+                        .timestamp(Instant.now().minusSeconds(15))
+                        .build())
+                .geometry(OverlandGeometry.builder()
+                        .type("Point")
+                        .coordinates(List.of(9.002d, 10d))
+                        .build())
+                .build();
+        OverlandRequest request =
+                OverlandRequest.builder().locations(List.of(o1, o2)).build();
+        client.post()
+                .uri("/overland")
+                .bodyValue(request)
+                .exchange()
+                .expectBody(SuccessResponse.class)
+                .consumeWith(r -> {
+                    SuccessResponse body = r.getResponseBody();
+                    assertEquals("ok", body.getResult());
+                });
+        client.post()
+                .uri("/locations")
+                .bodyValue(LocationsRequest.builder().build())
+                .exchange()
+                .expectBody(LocationsResponse.class)
+                .consumeWith(r -> {
+                    assertTrue(r.getResponseBody().getPeople().isEmpty());
+                });
+
         OverlandLocation first = OverlandLocation.builder()
                 .type("Feature")
                 .properties(OverlandProperties.builder()
@@ -73,7 +118,7 @@ public class MilesPerAwaTest {
                         .build())
                 .geometry(OverlandGeometry.builder()
                         .type("Point")
-                        .coordinates(List.of(10.00001d, 10d))
+                        .coordinates(List.of(10.001d, 10d))
                         .build())
                 .build();
         OverlandLocation last = OverlandLocation.builder()
@@ -85,11 +130,52 @@ public class MilesPerAwaTest {
                         .build())
                 .geometry(OverlandGeometry.builder()
                         .type("Point")
-                        .coordinates(List.of(10.00002d, 10d))
+                        .coordinates(List.of(10.002d, 10d))
                         .build())
                 .build();
-        OverlandRequest request =
-                OverlandRequest.builder().locations(List.of(first, last)).build();
+        request = OverlandRequest.builder().locations(List.of(first, last)).build();
+        client.post()
+                .uri("/overland")
+                .bodyValue(request)
+                .exchange()
+                .expectBody(SuccessResponse.class)
+                .consumeWith(r -> {
+                    SuccessResponse body = r.getResponseBody();
+                    assertEquals("ok", body.getResult());
+                });
+        client.post()
+                .uri("/locations")
+                .bodyValue(LocationsRequest.builder().build())
+                .exchange()
+                .expectBody(LocationsResponse.class)
+                .consumeWith(r -> {
+                    assertEquals("james", r.getResponseBody().getPeople().get(0).getName());
+                });
+        OverlandLocation c = OverlandLocation.builder()
+                .type("Feature")
+                .properties(OverlandProperties.builder()
+                        .device_id("james")
+                        .horizontal_accuracy(16)
+                        .timestamp(Instant.now().minusSeconds(5))
+                        .build())
+                .geometry(OverlandGeometry.builder()
+                        .type("Point")
+                        .coordinates(List.of(10.001d, 10d))
+                        .build())
+                .build();
+        OverlandLocation d = OverlandLocation.builder()
+                .type("Feature")
+                .properties(OverlandProperties.builder()
+                        .device_id("james")
+                        .horizontal_accuracy(16)
+                        .timestamp(Instant.now().minusSeconds(2))
+                        .build())
+                .geometry(OverlandGeometry.builder()
+                        .type("Point")
+                        .coordinates(List.of(10.002d, 10d))
+                        .build())
+                .build();
+        request = OverlandRequest.builder().locations(List.of(c, d)).build();
         client.post()
                 .uri("/overland")
                 .bodyValue(request)
