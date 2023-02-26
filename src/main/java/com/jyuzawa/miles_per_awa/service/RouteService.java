@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 James Yuzawa (https://www.jyuzawa.com/)
+ * Copyright (c) 2022-2023 James Yuzawa (https://www.jyuzawa.com/)
  * All rights reserved. Licensed under the MIT License.
  */
 package com.jyuzawa.miles_per_awa.service;
@@ -14,25 +14,24 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import lombok.AccessLevel;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+@Getter
 @Component
 public final class RouteService {
+    @Getter(AccessLevel.NONE)
     private final List<RoutePoint> normalPath;
 
-    @Getter
     private final String name;
 
-    @Getter
     private final boolean imperialUnits;
 
-    @Getter
     private final int intervalMeters;
 
-    @Getter
     private final List<BigDecimal> rawPath;
 
     @Autowired
@@ -44,7 +43,7 @@ public final class RouteService {
         this(name, imperialUnits, intervalMeters, routePointsService.getPoints());
     }
 
-    public RouteService(String name, boolean imperialUnits, int intervalMeters, List<LatLng> points) {
+    RouteService(String name, boolean imperialUnits, int intervalMeters, List<LatLng> points) {
         this.name = name;
         this.imperialUnits = imperialUnits;
         this.intervalMeters = intervalMeters;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 James Yuzawa (https://www.jyuzawa.com/)
+ * Copyright (c) 2022-2023 James Yuzawa (https://www.jyuzawa.com/)
  * All rights reserved. Licensed under the MIT License.
  */
 package com.jyuzawa.miles_per_awa.controller;
@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,8 +29,7 @@ public class OverlandController {
 
     private static final Duration MAX_LOOKBACK = Duration.ofMinutes(1);
 
-    @Autowired
-    private ObjectMapper jacksonObjectMapper;
+    private final ObjectMapper jacksonObjectMapper;
 
     private final IngestService ingestService;
 
