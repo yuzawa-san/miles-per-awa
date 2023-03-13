@@ -70,7 +70,7 @@ spotless {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
-	testImplementation 'org.mockito:mockito-core:5.1.1'
+	testImplementation 'org.mockito:mockito-core:5.2.0'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
 	testImplementation 'org.junit.platform:junit-platform-suite:1.9.2'
