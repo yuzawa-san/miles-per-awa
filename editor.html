@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='utf-8'>
+  <meta name="viewport" content="width=device-width,height=device-height, user-scalable=no" />
+  <title>miles-per-awa: Editor</title>
+  <!-- Load Leaflet from CDN -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin=""></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-editable/1.2.0/Leaflet.Editable.min.js"></script>
+
+  <style type='text/css'>
+      body { margin:0; padding:0; }
+      #map { position:absolute; top:0; bottom:0; right: 0; left: 0; width:100%; }
+      #settings {position:absolute; top:0; right:0; z-index:10000; background:white; padding:20px}
+</style>
+</head>
+<body>
+  <div id='map'></div>
+  <div id="settings">
+    <textarea id="csv">lat,long</textarea>
+    <div><button id="import">import</button></div>
+    <div><input type="checkbox" id="metric"> metric</div>
+  </div>
+
+<script type="text/javascript">
+var metric = false;
+document.getElementById("metric").onclick = function() {
+	metric = this.checked;
+	drawLabels();
+}
+var map = L.map('map', {
+	editable: true
+});
+var tilelayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png', {
+	attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OSM</a>, &copy; <a href="https://carto.com/attribution">CARTO</a>'
+}).addTo(map);
+
+var tooltips = [];
+var $csv = document.getElementById("csv");
+var line;
+
+function doLoad() {
+	if (line) {
+		line.disableEdit();
+		line.removeFrom(map);
+	}
+	var startingPoints = [];
+	var lines = $csv.value.split("\n");
+	for (var i = 1; i < lines.length; i++) {
+		startingPoints.push(lines[i].split(","));
+	}
+
+	if (startingPoints.length === 0) {
+		map.setView([41, -74], 10);
+		line = map.editTools.startPolyline();
+	} else {
+		line = L.polyline(startingPoints);
+		map.fitBounds(line.getBounds(), {
+			animate: false
+		});
+		line.addTo(map);
+		line.enableEdit();
+		//line.enableEdit();
+	}
+	drawLabels();
+}
+doLoad();
+document.getElementById("import").onclick = doLoad;
+
+function bsearch(A, key) {
+	var m;
+	var l = 0;
+	var r = A.length;
+	while (r - l > 1) {
+		m = l + Math.floor((r - l) / 2);
+		if (A[m] <= key) {
+			l = m;
+		} else {
+			r = m;
+		}
+	}
+
+	return l;
+}
+
+function latLonForDistance(deltas, latLngs, distance) {
+	var i1 = bsearch(deltas, distance);
+	var i2 = i1 + 1;
+	var d1 = deltas[i1];
+	var d2 = deltas[i2];
+	var p1 = latLngs[i1];
+	var p2 = latLngs[i2];
+	var pct = (distance - d1) / (d2 - d1);
+	return [
+		p1.lat + (p2.lat - p1.lat) * pct,
+		p1.lng + (p2.lng - p1.lng) * pct
+	];
+}
+
+function drawLabels() {
+	var latLngs = line.getLatLngs();
+	$csv.value = "lat,lon\n" + latLngs.map(x => x.lat.toFixed(5) + ',' + x.lng.toFixed(5)).join('\n');
+	var dist = 0;
+	var deltas = [0];
+	for (var i = 1; i < latLngs.length; i++) {
+		var prev = latLngs[i - 1];
+		var curr = latLngs[i];
+		dist += curr.distanceTo(prev);
+		deltas.push(dist);
+	}
+	if (metric) {
+		labelDistance = 1000;
+		labelUnit = "km";
+	} else {
+		labelDistance = 1609;
+		labelUnit = "mi";
+	}
+	tooltips.forEach(t => t.removeFrom(map));
+	tooltips = []
+	for (var m = 0; m * labelDistance < dist; m++) {
+		var tooltipLocation = latLonForDistance(deltas, latLngs, m * labelDistance);
+		var tooltip = L.tooltip({
+			permanent: true
+		}).setLatLng(tooltipLocation).setContent(m + labelUnit);
+		tooltip.addTo(map);
+		tooltips.push(tooltip);
+	}
+}
+
+
+map.on('editable:vertex:ctrlclick editable:vertex:metakeyclick', function(e) {
+	e.vertex.continue();
+});
+
+map.on('editable:vertex:new editable:vertex:deleted editable:vertex:dragend', function(e) {
+	drawLabels();
+});
+
+</script>
+</body>
+</html>
