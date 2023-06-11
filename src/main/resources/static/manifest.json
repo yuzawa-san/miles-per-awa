@@ -6,8 +6,8 @@
         "type": "image/png",
         "sizes": "256x256"
     }],
-    "start_url": "/",
-    "scope": "/",
+    "start_url": "./",
+    "scope": "./",
     "display": "standalone",
     "background_color": "#FFFFFF",
     "theme_color": "#FFFFFF"
