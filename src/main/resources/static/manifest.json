@@ -1,0 +1,14 @@
+{
+    "name": "miles-per-awa",
+    "short_name": "miles-per-awa",
+    "icons": [{
+        "src": "icon.png",
+        "type": "image/png",
+        "sizes": "256x256"
+    }],
+    "start_url": "./",
+    "scope": "./",
+    "display": "standalone",
+    "background_color": "#FFFFFF",
+    "theme_color": "#FFFFFF"
+}
