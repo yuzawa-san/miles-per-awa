@@ -20,7 +20,9 @@ fetch("./route")
 		const baseMs = parseInt(query.ts || startMs);
 		const now = () => baseMs + Date.now() - startMs;
 
-		const map = L.map('map', { zoomControl: false });
+		const map = L.map('map', {
+			zoomControl: false
+		});
 		map.setZoom(15);
 		L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png', {
 			attribution: '<a href="https://github.com/yuzawa-san/miles-per-awa">yuzawa-san</a> - &copy; <a href="http://www.openstreetmap.org/copyright">OSM</a>, &copy; <a href="https://carto.com/attribution">CARTO</a>'
@@ -28,13 +30,11 @@ fetch("./route")
 
 		const $loading = document.getElementById("loading");
 		const $info = document.getElementById("message");
-		const selectedLocation = L.marker({
-		}).setLatLng([0, 0]);
-		selectedLocation.addTo(map);
+		const selectedLocation = L.marker({}).setLatLng([0, 0]);
 		let calculateLatLng = null;
 		map.on('click', function(e) {
 			calculateLatLng = e.latlng;
-			$loading.style.display = null;
+			$loading.innerText = "loading...";
 			selectedLocation.setLatLng(calculateLatLng);
 		});
 
@@ -53,6 +53,7 @@ fetch("./route")
 			color: '#0000ff',
 			weight: 1
 		}).addTo(map);
+		map.fitBounds(routePolyline.getBounds().pad(0.3))
 
 		const locationCircle = L.circle([0, 0], 1);
 		locationCircle.addTo(map);
@@ -71,16 +72,17 @@ fetch("./route")
 			if (!locationFound && e.accuracy < 250) {
 				locationFound = true;
 				calculateLatLng = e.latlng;
-				$loading.style.display = null;
+				$loading.innerText = "loading...";
 				selectedLocation.setLatLng(calculateLatLng);
-				let group = L.featureGroup([selectedLocation, routePolyline]);
-				map.fitBounds(group.getBounds());
 			}
 		}
 		map.on('locationfound', onLocationFound);
 
 		function onLocationError(e) {
 			alert(e.message);
+			calculateLatLng = map.getCenter();
+			$loading.innerText = "loading...";
+			selectedLocation.setLatLng(calculateLatLng);
 		}
 
 		map.on('locationerror', onLocationError);
@@ -105,21 +107,30 @@ fetch("./route")
 
 		let labelUnit = "mi";
 		let labelDistance = 1609;
-		for (let m = 0; m * labelDistance < normalPath.length * intervalMeters; m++) {
+		const maxDist = normalPath.length * intervalMeters;
+		for (let m = 0; m * labelDistance < maxDist; m++) {
 			let tooltipLocation = latLonForDistance(m * labelDistance);
-			let circle = L.circleMarker(tooltipLocation, {radius:7, stroke:false, fillOpacity:0.7, color:'black', interactive:false});
-			circle.addTo(map);
-			
-			var text = L.tooltip({
-				permanent: true,
-				direction: 'center',
-				className: 'text',
+			let circle = L.circleMarker(tooltipLocation, {
+				radius: 7,
+				stroke: false,
+				fillOpacity: 0.7,
+				color: 'black',
 				interactive: false
-			})
-			.setContent(`${m}`)
-			.setLatLng(tooltipLocation);
+			});
+			circle.addTo(map);
+
+			var text = L.tooltip({
+					permanent: true,
+					direction: 'center',
+					className: 'text',
+					interactive: false,
+					pane: 'markerPane'
+				})
+				.setContent(`${m}`)
+				.setLatLng(tooltipLocation);
 			text.addTo(map);
 		}
+		selectedLocation.addTo(map);
 
 		const DEG_TO_RAD = 0.0174532925199;
 		const RAD_TO_DEG = 57.295779513082320876;
@@ -217,7 +228,7 @@ fetch("./route")
 					state[name] = userState;
 				}
 				userState.v = point.velocity;
-				userState.estimatedOffset = (point.index * intervalMeters) + (nowMs - point.timestampMs) / 1000 * point.velocity;
+				userState.estimatedOffset = Math.min(maxDist, (point.index * intervalMeters) + (nowMs - point.timestampMs) / 1000 * point.velocity);
 				userState.marker.setLatLng(latLonForDistance(userState.estimatedOffset));
 
 			}
@@ -225,7 +236,7 @@ fetch("./route")
 
 			if (calculateLatLng) {
 				const targets = candidates(calculateLatLng);
-				let out = "<table border=1 cellspacing=0 cellpadding=5><tr><th>name</th><th>at</th><th>pace</th>" + targets.map(dst => `<th>to ${(METERS_TO_MILES * dst.offset).toFixed(2)} mi</th>`).join("") + "</tr>";
+				let out = "<table border=1 cellspacing=0 cellpadding=3><tr><th>name</th><th>at</th><th>pace</th>" + targets.map(dst => `<th>to ${(METERS_TO_MILES * dst.offset).toFixed(2)} mi</th>`).join("") + "</tr>";
 				for (let name in state) {
 					const userState = state[name];
 					if (userState.estimatedOffset) {
@@ -250,10 +261,11 @@ fetch("./route")
 				}
 				out += '</table>';
 				if (targets.length == 0) {
-					out += "<p>no targets, please click on route</p>";
+					$loading.innerText = "no targets, please click on route";
+				} else {
+					$loading.innerHTML = `<a href="https://www.google.com/maps/dir/?api=1&travelmode=bicycling&destination=${calculateLatLng.lat},${calculateLatLng.lng}" target="blank">navigate</a>`;
 				}
 				$info.innerHTML = out;
-				$loading.style.display = 'none';
 			}
 		}
 		render();

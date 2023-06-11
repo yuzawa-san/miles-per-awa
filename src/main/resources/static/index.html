@@ -1,57 +1,17 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <title>miles per awa</title>
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <style>
-        body {
-            padding: 0;
-            margin: 0;
-            font-family: sans-serif;
-        }
-        html, body, #map {
-            height: 100%;
-            width: 100%;
-        }
-        #container {
-            position: relative;
-            height: 100%;
-            width: 100%;
-        }
-        #infoHolder {
-            position:absolute;
-            width: 100%;
-            max-height: 30%;
-            flex-direction: column;
-            overflow: auto;
-            -webkit-overflow-scrolling: touch;
-            z-index: 99999;
-            background: rgba(255,255,255,0.9);
-        }
-        #info {
-            margin: 5px;
-            font-size: 12px;
-        }
-        #info tr,td {
-            font-size: 10px;
-        }
-        .leaflet-tooltip-pane .text {
-            color: white; 
-            font-weight: bold;
-            background: transparent;
-            border:0;
-            box-shadow: none;
-            font-size: 8px;
-        }
-        #title {
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        #loading {
-            color:gray;
-            font-size:10px;
-        }
-    </style>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="thin-gbfs">
+    <link rel="apple-touch-icon" href="icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="shortcut icon" href="icon.png">
+    <meta name="description" content="precision spectating for biking and running">
+    <link rel="stylesheet" href="style.css" />
     <!-- Load Leaflet from CDN -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin=""></script>
@@ -61,7 +21,8 @@
 <div id="container">
     <div id="infoHolder">
         <div id="info">
-            <div id="title">miles-per-awa: <span id="name"></span> <span id="loading">loading...</span></div>
+            <div id="title">miles-per-awa: <span id="name"></span></div>
+            <div id="loading">loading...</div>
             <div id="message"></div>
         </div>
     </div>
