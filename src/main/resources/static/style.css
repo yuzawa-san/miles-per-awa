@@ -28,6 +28,7 @@ html, body, #map {
 #info {
     margin: 5px;
     font-size: 13px;
+    text-align: center;
 }
 table {
     margin-bottom: 10px;
@@ -56,12 +57,10 @@ th {
 }
 #title {
     font-weight: bold;
-    text-align: center;
 }
 #loading {
     color: gray;
     font-size: 10px;
-    text-align: center;
 }
 #message table {
     margin: 0px auto;

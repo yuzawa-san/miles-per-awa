@@ -25,7 +25,7 @@ fetch("./route")
 		});
 		map.setZoom(15);
 		L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png', {
-			attribution: '<a href="https://github.com/yuzawa-san/miles-per-awa">yuzawa-san</a> - &copy; <a href="http://www.openstreetmap.org/copyright">OSM</a>, &copy; <a href="https://carto.com/attribution">CARTO</a>'
+			attribution: '<a href="&copy; https://github.com/yuzawa-san/miles-per-awa">yuzawa-san</a>, <a href="http://www.openstreetmap.org/copyright">OSM</a>, &copy; <a href="https://carto.com/attribution">CARTO</a>'
 		}).addTo(map);
 
 		const $loading = document.getElementById("loading");
@@ -50,7 +50,7 @@ fetch("./route")
 			normalPath.push(L.latLng([rawPath[i], rawPath[i + 1]]));
 		}
 		const routePolyline = L.polyline(normalPath, {
-			color: '#0000ff',
+			color: 'rgb(254, 67, 0)',
 			weight: 1
 		}).addTo(map);
 		map.fitBounds(routePolyline.getBounds().pad(0.3))
@@ -58,7 +58,7 @@ fetch("./route")
 		const locationCircle = L.circle([0, 0], 1);
 		locationCircle.addTo(map);
 		map.locate({
-			maximumAge: 15000,
+			maximumAge: 20000,
 			setView: false,
 			watch: true
 		});
@@ -263,8 +263,9 @@ fetch("./route")
 				if (targets.length == 0) {
 					$loading.innerText = "no targets, please click on route";
 				} else {
-					$loading.innerHTML = `<a href="https://www.google.com/maps/dir/?api=1&travelmode=bicycling&destination=${calculateLatLng.lat},${calculateLatLng.lng}" target="blank">navigate</a>`;
+					$loading.innerHTML = "&nbsp;";
 				}
+				out += `<div><a href="https://www.google.com/maps/dir/?api=1&travelmode=walking&destination=${calculateLatLng.lat},${calculateLatLng.lng}" target="blank"><button>navigate</button></a></div>`;
 				$info.innerHTML = out;
 			}
 		}
