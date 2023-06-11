@@ -248,7 +248,7 @@ fetch("./route")
 				}
 				out += '</table>';
 				if (targets.length == 0) {
-					out += "no targets, please click on route";
+					out += "<p>no targets, please click on route</p>";
 				}
 				$info.innerHTML = out;
 			}
