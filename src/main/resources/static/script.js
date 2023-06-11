@@ -23,18 +23,19 @@ fetch("./route")
 		const map = L.map('map', { zoomControl: false });
 		map.setZoom(15);
 		L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png', {
-			attribution: '<a href="https://github.com/yuzawa-san/miles-per-awa">miles-per-awa</a> - &copy; <a href="http://www.openstreetmap.org/copyright">OSM</a>, &copy; <a href="https://carto.com/attribution">CARTO</a>'
+			attribution: '<a href="https://github.com/yuzawa-san/miles-per-awa">yuzawa-san</a> - &copy; <a href="http://www.openstreetmap.org/copyright">OSM</a>, &copy; <a href="https://carto.com/attribution">CARTO</a>'
 		}).addTo(map);
 
-		const $info = document.getElementById("info");
-		const info = L.marker({
+		const $loading = document.getElementById("loading");
+		const $info = document.getElementById("message");
+		const selectedLocation = L.marker({
 		}).setLatLng([0, 0]);
-		info.addTo(map);
+		selectedLocation.addTo(map);
 		let calculateLatLng = null;
 		map.on('click', function(e) {
 			calculateLatLng = e.latlng;
-			$info.innerText = "loading...";
-			info.setLatLng(calculateLatLng);
+			$loading.style.display = null;
+			selectedLocation.setLatLng(calculateLatLng);
 		});
 
 		let normalPath = [];
@@ -44,6 +45,7 @@ fetch("./route")
 			intervalMeters
 		} = input;
 		document.title += ": " + name;
+		document.getElementById("name").innerText = name;
 		for (let i = 0; i < input.rawPath.length; i += 2) {
 			normalPath.push(L.latLng([rawPath[i], rawPath[i + 1]]));
 		}
@@ -69,9 +71,9 @@ fetch("./route")
 			if (!locationFound && e.accuracy < 250) {
 				locationFound = true;
 				calculateLatLng = e.latlng;
-				$info.innerText = "loading...";
-				info.setLatLng(calculateLatLng);
-				let group = L.featureGroup([info, routePolyline]);
+				$loading.style.display = null;
+				selectedLocation.setLatLng(calculateLatLng);
+				let group = L.featureGroup([selectedLocation, routePolyline]);
 				map.fitBounds(group.getBounds());
 			}
 		}
@@ -223,7 +225,7 @@ fetch("./route")
 
 			if (calculateLatLng) {
 				const targets = candidates(calculateLatLng);
-				let out = "<table border=1 cellspacing=0 cellpadding=5><tr><th>name</th><th>at</th><th>pace (mi)</th>" + targets.map(dst => `<th>to ${(METERS_TO_MILES * dst.offset).toFixed(2)} mi</th>`).join("") + "</tr>";
+				let out = "<table border=1 cellspacing=0 cellpadding=5><tr><th>name</th><th>at</th><th>pace</th>" + targets.map(dst => `<th>to ${(METERS_TO_MILES * dst.offset).toFixed(2)} mi</th>`).join("") + "</tr>";
 				for (let name in state) {
 					const userState = state[name];
 					if (userState.estimatedOffset) {
@@ -235,7 +237,7 @@ fetch("./route")
 					targets.forEach(dst => {
 						const deltaD = dst.offset - userState.estimatedOffset;
 						if (deltaD < 0) {
-							out += `<td>already passed</td>`;
+							out += `<td>passed</td>`;
 							return;
 						}
 						const deltaT = deltaD / userState.v;
@@ -251,6 +253,7 @@ fetch("./route")
 					out += "<p>no targets, please click on route</p>";
 				}
 				$info.innerHTML = out;
+				$loading.style.display = 'none';
 			}
 		}
 		render();

@@ -26,10 +26,11 @@
             overflow: auto;
             -webkit-overflow-scrolling: touch;
             z-index: 99999;
-            background: rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.9);
         }
         #info {
             margin: 5px;
+            font-size: 12px;
         }
         #info tr,td {
             font-size: 10px;
@@ -42,6 +43,14 @@
             box-shadow: none;
             font-size: 8px;
         }
+        #title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        #loading {
+            color:gray;
+            font-size:10px;
+        }
     </style>
     <!-- Load Leaflet from CDN -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="" />
@@ -50,8 +59,13 @@
 </head>
 <body>
 <div id="container">
-<div id="infoHolder"><div id="info">loading...</div></div>
-<div id="map"></div>
+    <div id="infoHolder">
+        <div id="info">
+            <div id="title">miles-per-awa: <span id="name"></span> <span id="loading">loading...</span></div>
+            <div id="message"></div>
+        </div>
+    </div>
+    <div id="map"></div>
 </div>
 <script src="script.js">
 </script>
