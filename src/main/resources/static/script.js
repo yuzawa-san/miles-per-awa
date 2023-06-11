@@ -20,25 +20,37 @@ fetch("./route")
 		const baseMs = parseInt(query.ts || startMs);
 		const now = () => baseMs + Date.now() - startMs;
 
-		const map = L.map('map');
+		const map = L.map('map', { zoomControl: false });
 		map.setZoom(15);
 		L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png', {
-			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OSM</a>, &copy; <a href="https://carto.com/attribution">CARTO</a>'
+			attribution: '<a href="https://github.com/yuzawa-san/miles-per-awa">miles-per-awa</a> - &copy; <a href="http://www.openstreetmap.org/copyright">OSM</a>, &copy; <a href="https://carto.com/attribution">CARTO</a>'
 		}).addTo(map);
 
-		const info = L.tooltip({
-			permanent: true,
-			maxWidth: "auto"
-		}).setLatLng([0, 0]).setContent("");
-		info.closePopup();
+		const $info = document.getElementById("info");
+		const info = L.marker({
+		}).setLatLng([0, 0]);
 		info.addTo(map);
 		let calculateLatLng = null;
 		map.on('click', function(e) {
 			calculateLatLng = e.latlng;
-			info.setContent("loading...");
+			$info.innerText = "loading...";
 			info.setLatLng(calculateLatLng);
-			info.openPopup();
 		});
+
+		let normalPath = [];
+		let {
+			rawPath,
+			name,
+			intervalMeters
+		} = input;
+		document.title += ": " + name;
+		for (let i = 0; i < input.rawPath.length; i += 2) {
+			normalPath.push(L.latLng([rawPath[i], rawPath[i + 1]]));
+		}
+		const routePolyline = L.polyline(normalPath, {
+			color: '#0000ff',
+			weight: 1
+		}).addTo(map);
 
 		const locationCircle = L.circle([0, 0], 1);
 		locationCircle.addTo(map);
@@ -56,12 +68,11 @@ fetch("./route")
 			locationCircle.setRadius(radius);
 			if (!locationFound && e.accuracy < 250) {
 				locationFound = true;
-				map.setView(e.latlng, 15)
-				info.setLatLng(e.latlng);
-				const infoDiv = document.createElement("DIV");
-				infoDiv.innerText = "click at points\nin race course\nto get information";
-				info.setContent(infoDiv);
-				info.openTooltip();
+				calculateLatLng = e.latlng;
+				$info.innerText = "loading...";
+				info.setLatLng(calculateLatLng);
+				let group = L.featureGroup([info, routePolyline]);
+				map.fitBounds(group.getBounds());
 			}
 		}
 		map.on('locationfound', onLocationFound);
@@ -71,25 +82,6 @@ fetch("./route")
 		}
 
 		map.on('locationerror', onLocationError);
-
-
-		let normalPath = [];
-		let {
-			rawPath,
-			name,
-			intervalMeters
-		} = input;
-		document.title += ": " + name;
-		for (let i = 0; i < input.rawPath.length; i += 2) {
-			normalPath.push(L.latLng([rawPath[i], rawPath[i + 1]]));
-		}
-
-		const routePolyline = L.polyline([], {
-			color: '#0000ff',
-			weight: 1
-		}).addTo(map);
-		routePolyline.setLatLngs(normalPath);
-		map.fitBounds(L.polyline(normalPath).getBounds());
 
 		const state = {};
 
@@ -107,6 +99,24 @@ fetch("./route")
 				p1.lat + (p2.lat - p1.lat) * pct,
 				p1.lng + (p2.lng - p1.lng) * pct
 			];
+		}
+
+		let labelUnit = "mi";
+		let labelDistance = 1609;
+		for (let m = 0; m * labelDistance < normalPath.length * intervalMeters; m++) {
+			let tooltipLocation = latLonForDistance(m * labelDistance);
+			let circle = L.circleMarker(tooltipLocation, {radius:7, stroke:false, fillOpacity:0.7, color:'black', interactive:false});
+			circle.addTo(map);
+			
+			var text = L.tooltip({
+				permanent: true,
+				direction: 'center',
+				className: 'text',
+				interactive: false
+			})
+			.setContent(`${m}`)
+			.setLatLng(tooltipLocation);
+			text.addTo(map);
 		}
 
 		const DEG_TO_RAD = 0.0174532925199;
@@ -212,35 +222,35 @@ fetch("./route")
 
 
 			if (calculateLatLng) {
-				let out = "";
 				const targets = candidates(calculateLatLng);
+				let out = "<table border=1 cellspacing=0 cellpadding=5><tr><th>name</th><th>at</th><th>pace (mi)</th>" + targets.map(dst => `<th>to ${(METERS_TO_MILES * dst.offset).toFixed(2)} mi</th>`).join("") + "</tr>";
 				for (let name in state) {
 					const userState = state[name];
 					if (userState.estimatedOffset) {
 						const paceSeconds = 26.8224 / userState.v * 60;
-						out += `${name}: PACE ${Math.floor(paceSeconds / 60)}:${padZero(Math.floor(paceSeconds % 60))} mile\n`
+						out += `<tr><td>${name}</td><td>${(METERS_TO_MILES * userState.estimatedOffset).toFixed(2)}</td><td>${Math.floor(paceSeconds / 60)}:${padZero(Math.floor(paceSeconds % 60))}</td>`
 					} else {
 						continue;
 					}
 					targets.forEach(dst => {
 						const deltaD = dst.offset - userState.estimatedOffset;
 						if (deltaD < 0) {
-							out += `to ${(METERS_TO_MILES * dst.offset).toFixed(2)} mi, already passed\n`;
+							out += `<td>already passed</td>`;
 							return;
 						}
 						const deltaT = deltaD / userState.v;
 						const dt = new Date(nowMs + deltaT * 1000);
 						const etaMinutes = Math.floor(deltaT / 60);
 						const etaSeconds = padZero(Math.floor(deltaT % 60));
-						out += `to ${(METERS_TO_MILES * dst.offset).toFixed(2)} mi in ${etaMinutes}m${etaSeconds}s, at ${dt.getHours()}:${padZero(dt.getMinutes())}\n`;
+						out += `<td>in ${etaMinutes}m${etaSeconds}s<br>at ${dt.getHours()}:${padZero(dt.getMinutes())}</td>`;
 					});
+					out += '</tr>';
 				}
+				out += '</table>';
 				if (targets.length == 0) {
-					out = "No targets at this location";
+					out += "no targets, please click on route";
 				}
-				const infoDiv = document.createElement("DIV");
-				infoDiv.innerText = out;
-				info.setContent(infoDiv);
+				$info.innerHTML = out;
 			}
 		}
 		render();
