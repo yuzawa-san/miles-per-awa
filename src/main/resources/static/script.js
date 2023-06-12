@@ -5,8 +5,6 @@ fetch("./route")
 		let lastLoadMs = 0;
 
 		const PATH_SNAP_METER = 100;
-		const METERS_TO_MILES = 0.000621371;
-
 
 		const query = {};
 		const queryString = window.location.search;
@@ -29,22 +27,26 @@ fetch("./route")
 		}).addTo(map);
 
 		const $loading = document.getElementById("loading");
+		const $navigation = document.getElementById("navigation");
 		const $info = document.getElementById("message");
 		const selectedLocation = L.marker({}).setLatLng([0, 0]);
 		let calculateLatLng = null;
-		map.on('click', function(e) {
-			calculateLatLng = e.latlng;
+		function setLocation(loc) {
+			calculateLatLng = loc;
 			$loading.innerText = "loading...";
+			$navigation.href = `https://www.google.com/maps/dir/?api=1&travelmode=walking&destination=${calculateLatLng.lat},${calculateLatLng.lng}`;
 			selectedLocation.setLatLng(calculateLatLng);
+		}
+		map.on('click', function(e) {
+			setLocation(e.latlng);
 		});
 
 		let normalPath = [];
 		let {
 			rawPath,
 			name,
-			intervalMeters
+			intervalMeters,
 		} = input;
-		document.title += ": " + name;
 		document.getElementById("name").innerText = name;
 		for (let i = 0; i < input.rawPath.length; i += 2) {
 			normalPath.push(L.latLng([rawPath[i], rawPath[i + 1]]));
@@ -53,39 +55,48 @@ fetch("./route")
 			color: 'rgb(254, 67, 0)',
 			weight: 1
 		}).addTo(map);
-		map.fitBounds(routePolyline.getBounds().pad(0.3))
+		map.fitBounds(routePolyline.getBounds().pad(0.3));
+		setLocation(map.getCenter());
 
 		const locationCircle = L.circle([0, 0], 1);
 		locationCircle.addTo(map);
-		map.locate({
-			maximumAge: 20000,
-			setView: false,
-			watch: true
-		});
-
+		let locationWatch = null;
 		let locationFound = false;
-
+		let $locate = document.getElementById("locate");
+		$locate.onclick = function() {
+			if (locationFound) {
+				const location = locationCircle.getLatLng();
+				setLocation(location)
+				map.panTo(location);
+				return;
+			}
+			if (!locationWatch) {
+				locationWatch = map.locate({
+					maximumAge: 20000,
+					setView: false,
+					watch: true
+				});
+			}
+		};
 		function onLocationFound(e) {
 			const radius = e.accuracy / 2;
 			locationCircle.setLatLng(e.latlng);
 			locationCircle.setRadius(radius);
 			if (!locationFound && e.accuracy < 250) {
 				locationFound = true;
-				calculateLatLng = e.latlng;
-				$loading.innerText = "loading...";
-				selectedLocation.setLatLng(calculateLatLng);
+				const location = e.latlng;
+				setLocation(location);
+				map.panTo(location);
 			}
 		}
 		map.on('locationfound', onLocationFound);
-
+	
 		function onLocationError(e) {
 			alert(e.message);
-			calculateLatLng = map.getCenter();
-			$loading.innerText = "loading...";
-			selectedLocation.setLatLng(calculateLatLng);
 		}
-
+	
 		map.on('locationerror', onLocationError);
+		
 
 		const state = {};
 
@@ -105,8 +116,25 @@ fetch("./route")
 			];
 		}
 
-		let labelUnit = "mi";
-		let labelDistance = 1609;
+		let $metric = document.getElementById("metric");
+		$metric.onchange = function() {
+			if ($metric.value === 'km'){
+				localStorage.setItem("metric","1");
+			} else {
+				localStorage.removeItem("metric");
+			}
+			window.location.reload();
+		};
+		let metric = !!localStorage.getItem("metric");
+		if (metric) {
+			$metric.value = 'km';
+		}
+		const labelUnit = metric ? "km" : "mi";
+		const labelDistance = metric ? 1000 : 1609;
+
+		function formatDistance(dist) {
+			return (dist / labelDistance).toFixed(1);
+		}
 		const maxDist = normalPath.length * intervalMeters;
 		for (let m = 0; m * labelDistance < maxDist; m++) {
 			let tooltipLocation = latLonForDistance(m * labelDistance);
@@ -119,7 +147,7 @@ fetch("./route")
 			});
 			circle.addTo(map);
 
-			var text = L.tooltip({
+			let text = L.tooltip({
 					permanent: true,
 					direction: 'center',
 					className: 'text',
@@ -236,26 +264,27 @@ fetch("./route")
 
 			if (calculateLatLng) {
 				const targets = candidates(calculateLatLng);
-				let out = "<table border=1 cellspacing=0 cellpadding=3><tr><th>name</th><th>at</th><th>pace</th>" + targets.map(dst => `<th>to ${(METERS_TO_MILES * dst.offset).toFixed(2)} mi</th>`).join("") + "</tr>";
+				let out = `<table border=1><tr><th rowspan=2>name</th><th rowspan=2>${labelUnit}</th><th rowspan=2>pace</th>` + targets.map(dst => `<th colspan=2>to ${labelUnit} ${formatDistance(dst.offset)}</th>`).join("") + "</tr>";
+				out += "<tr>"+ targets.map(dst => `<th>in</th><th>at</th>`).join("") + "</tr>";
 				for (let name in state) {
 					const userState = state[name];
 					if (userState.estimatedOffset) {
-						const paceSeconds = 26.8224 / userState.v * 60;
-						out += `<tr><td>${name}</td><td>${(METERS_TO_MILES * userState.estimatedOffset).toFixed(2)}</td><td>${Math.floor(paceSeconds / 60)}:${padZero(Math.floor(paceSeconds % 60))}</td>`
+						const paceSeconds = labelDistance / userState.v;
+						out += `<tr><td>${name}</td><td>${formatDistance(userState.estimatedOffset)}</td><td>${Math.floor(paceSeconds / 60)}&#8242;${padZero(Math.floor(paceSeconds % 60))}&#8243;</td>`
 					} else {
 						continue;
 					}
 					targets.forEach(dst => {
 						const deltaD = dst.offset - userState.estimatedOffset;
 						if (deltaD < 0) {
-							out += `<td>passed</td>`;
+							out += `<td colspan=2>passed</td>`;
 							return;
 						}
 						const deltaT = deltaD / userState.v;
 						const dt = new Date(nowMs + deltaT * 1000);
 						const etaMinutes = Math.floor(deltaT / 60);
 						const etaSeconds = padZero(Math.floor(deltaT % 60));
-						out += `<td>in ${etaMinutes}m${etaSeconds}s<br>at ${dt.getHours()}:${padZero(dt.getMinutes())}</td>`;
+						out += `<td>${etaMinutes}&#8242;${etaSeconds}&#8243;</td><td>${padZero(dt.getHours())}:${padZero(dt.getMinutes())}</td>`;
 					});
 					out += '</tr>';
 				}
@@ -265,7 +294,6 @@ fetch("./route")
 				} else {
 					$loading.innerHTML = "&nbsp;";
 				}
-				out += `<div><a href="https://www.google.com/maps/dir/?api=1&travelmode=walking&destination=${calculateLatLng.lat},${calculateLatLng.lng}" target="blank"><button>navigate</button></a></div>`;
 				$info.innerHTML = out;
 			}
 		}
