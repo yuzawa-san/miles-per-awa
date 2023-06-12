@@ -99,7 +99,6 @@ fetch("./route")
 
 		map.on('locationerror', onLocationError);
 
-
 		const state = {};
 
 		function latLonForDistance(distance) {
