@@ -31,6 +31,7 @@ fetch("./route")
 		const $info = document.getElementById("message");
 		const selectedLocation = L.marker({}).setLatLng([0, 0]);
 		let calculateLatLng = null;
+
 		function setLocation(loc) {
 			calculateLatLng = loc;
 			$loading.innerText = "loading...";
@@ -78,6 +79,7 @@ fetch("./route")
 				});
 			}
 		};
+
 		function onLocationFound(e) {
 			const radius = e.accuracy / 2;
 			locationCircle.setLatLng(e.latlng);
@@ -90,13 +92,13 @@ fetch("./route")
 			}
 		}
 		map.on('locationfound', onLocationFound);
-	
+
 		function onLocationError(e) {
 			alert(e.message);
 		}
-	
+
 		map.on('locationerror', onLocationError);
-		
+
 
 		const state = {};
 
@@ -118,8 +120,8 @@ fetch("./route")
 
 		let $metric = document.getElementById("metric");
 		$metric.onchange = function() {
-			if ($metric.value === 'km'){
-				localStorage.setItem("metric","1");
+			if ($metric.value === 'km') {
+				localStorage.setItem("metric", "1");
 			} else {
 				localStorage.removeItem("metric");
 			}
@@ -265,7 +267,7 @@ fetch("./route")
 			if (calculateLatLng) {
 				const targets = candidates(calculateLatLng);
 				let out = `<table border=1><tr><th rowspan=2>name</th><th rowspan=2>${labelUnit}</th><th rowspan=2>pace</th>` + targets.map(dst => `<th colspan=2>to ${labelUnit} ${formatDistance(dst.offset)}</th>`).join("") + "</tr>";
-				out += "<tr>"+ targets.map(dst => `<th>in</th><th>at</th>`).join("") + "</tr>";
+				out += "<tr>" + targets.map(dst => `<th>in</th><th>at</th>`).join("") + "</tr>";
 				for (let name in state) {
 					const userState = state[name];
 					if (userState.estimatedOffset) {
