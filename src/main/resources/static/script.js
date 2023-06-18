@@ -65,7 +65,10 @@ fetch("./route")
 		locationCircle.addTo(map);
 		let $locate = document.getElementById("locate");
 		$locate.onclick = function() {
-			map.locate({setView: true, maxZoom: 16});
+			map.locate({
+				setView: true,
+				maxZoom: 16
+			});
 		};
 
 		function onLocationFound(e) {
@@ -101,7 +104,7 @@ fetch("./route")
 
 		let $metric = document.getElementById("metric");
 		$metric.onchange = function() {
-			window.location = "?metric=" + ($metric.value === 'km' ? '1': '0');
+			window.location = "?metric=" + ($metric.value === 'km' ? '1' : '0');
 		};
 		let metric = query.metric === '1';
 		if (metric) {
@@ -201,6 +204,7 @@ fetch("./route")
 
 		const LONG_RENDER_INTERVAL = 15;
 		let renderInterval = LONG_RENDER_INTERVAL;
+
 		function render(nowMs) {
 			for (let name in points) {
 				const point = points[name];
@@ -232,18 +236,18 @@ fetch("./route")
 				} else {
 					continue;
 				}
-				
+
 				targets.forEach(dst => {
 					const deltaD = dst.offset - userState.estimatedOffset;
+					const deltaT = deltaD / userState.v;
+					if (deltaT > -60 && deltaT < 180) {
+						renderInterval = Math.min(renderInterval, 1);
+					} else if (deltaT < 360) {
+						renderInterval = Math.min(renderInterval, 5);
+					}
 					if (deltaD < 0) {
 						out += `<td colspan=2>passed</td>`;
 						return;
-					}
-					const deltaT = deltaD / userState.v;
-					if (deltaT < 180) {
-						renderInterval = Math.min(renderInterval, 1);
-					}else if (deltaT < 360) {
-						renderInterval = Math.min(renderInterval, 5);
 					}
 					const dt = new Date(nowMs + deltaT * 1000);
 					const etaMinutes = Math.floor(deltaT / 60);
@@ -260,6 +264,7 @@ fetch("./route")
 			}
 			$info.innerHTML = out;
 		}
+
 		function scheduledTasks() {
 			const nowMs = now();
 			const nowSeconds = Math.floor(nowMs / 1000);
@@ -277,7 +282,9 @@ fetch("./route")
 					.then((response) => response.json())
 					.then((input) => {
 						input.people.forEach(v => {
-							const {name} = v;
+							const {
+								name
+							} = v;
 							if (!points[name]) {
 								lastRender = 0;
 							}
