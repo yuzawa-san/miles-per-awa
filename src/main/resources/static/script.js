@@ -54,42 +54,22 @@ fetch("./route")
 		}
 		const routePolyline = L.polyline(normalPath, {
 			color: 'rgb(254, 67, 0)',
-			weight: 1
+			weight: 4
 		}).addTo(map);
 		map.fitBounds(routePolyline.getBounds().pad(0.3));
 		setLocation(map.getCenter());
 
 		const locationCircle = L.circle([0, 0], 1);
 		locationCircle.addTo(map);
-		let locationWatch = null;
-		let locationFound = false;
 		let $locate = document.getElementById("locate");
 		$locate.onclick = function() {
-			if (locationFound) {
-				const location = locationCircle.getLatLng();
-				setLocation(location)
-				map.panTo(location);
-				return;
-			}
-			if (!locationWatch) {
-				locationWatch = map.locate({
-					maximumAge: 20000,
-					setView: false,
-					watch: true
-				});
-			}
+			map.locate({setView: true, maxZoom: 16});
 		};
 
 		function onLocationFound(e) {
 			const radius = e.accuracy / 2;
 			locationCircle.setLatLng(e.latlng);
 			locationCircle.setRadius(radius);
-			if (!locationFound && e.accuracy < 250) {
-				locationFound = true;
-				const location = e.latlng;
-				setLocation(location);
-				map.panTo(location);
-			}
 		}
 		map.on('locationfound', onLocationFound);
 
