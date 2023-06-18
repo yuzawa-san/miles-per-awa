@@ -105,7 +105,7 @@ fetch("./route")
 		if (metric) {
 			$metric.value = 'km';
 		}
-		document.getElementById("icon").src = "icon.png";
+		document.getElementById("icon").src = metric ? "metric-icon.png" : "icon.png";
 		const labelUnit = metric ? "km" : "mi";
 		const labelDistance = metric ? 1000 : 1609;
 
