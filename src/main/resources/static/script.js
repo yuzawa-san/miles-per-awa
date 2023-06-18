@@ -2,7 +2,8 @@ fetch("./route")
 	.then((response) => response.json())
 	.then((input) => {
 		let points = {};
-		let lastLoadMs = 0;
+		let lastLoad = 0;
+		let lastRender = 0;
 
 		const PATH_SNAP_METER = 100;
 
@@ -35,6 +36,7 @@ fetch("./route")
 		function setLocation(loc) {
 			calculateLatLng = loc;
 			$loading.innerText = "loading...";
+			lastRender = 0;
 			$navigation.href = `https://www.google.com/maps/dir/?api=1&travelmode=walking&destination=${calculateLatLng.lat},${calculateLatLng.lng}`;
 			selectedLocation.setLatLng(calculateLatLng);
 		}
@@ -197,27 +199,9 @@ fetch("./route")
 			})
 		}
 
-		function render() {
-			const nowMs = now();
-			if ((nowMs - lastLoadMs) > 15000) {
-				lastLoadMs = nowMs;
-				fetch("./locations", {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json'
-						},
-						body: JSON.stringify({
-							people: null
-						})
-					})
-					.then((response) => response.json())
-					.then((input) => {
-						input.people.forEach(v => {
-							points[v.name] = v;
-						});
-					});
-			}
-
+		const LONG_RENDER_INTERVAL = 15;
+		let renderInterval = LONG_RENDER_INTERVAL;
+		function render(nowMs) {
 			for (let name in points) {
 				const point = points[name];
 				let userState = state[name];
@@ -235,45 +219,77 @@ fetch("./route")
 				userState.v = point.velocity;
 				userState.estimatedOffset = Math.min(maxDist, (point.index * intervalMeters) + (nowMs - point.timestampMs) / 1000 * point.velocity);
 				userState.marker.setLatLng(latLonForDistance(userState.estimatedOffset));
-
 			}
-
-
-			if (calculateLatLng) {
-				const targets = candidates(calculateLatLng);
-				let out = `<table border=1><tr><th rowspan=2>name</th><th rowspan=2>${labelUnit}</th><th rowspan=2>pace</th>` + targets.map(dst => `<th colspan=2>to ${labelUnit} ${formatDistance(dst.offset)}</th>`).join("") + "</tr>";
-				out += "<tr>" + targets.map(dst => `<th>in</th><th>at</th>`).join("") + "</tr>";
-				for (let name in state) {
-					const userState = state[name];
-					if (userState.estimatedOffset) {
-						const paceSeconds = labelDistance / userState.v;
-						out += `<tr><td>${name}</td><td>${formatDistance(userState.estimatedOffset)}</td><td>${Math.floor(paceSeconds / 60)}&#8242;${padZero(Math.floor(paceSeconds % 60))}&#8243;</td>`
-					} else {
-						continue;
-					}
-					targets.forEach(dst => {
-						const deltaD = dst.offset - userState.estimatedOffset;
-						if (deltaD < 0) {
-							out += `<td colspan=2>passed</td>`;
-							return;
-						}
-						const deltaT = deltaD / userState.v;
-						const dt = new Date(nowMs + deltaT * 1000);
-						const etaMinutes = Math.floor(deltaT / 60);
-						const etaSeconds = padZero(Math.floor(deltaT % 60));
-						out += `<td>${etaMinutes}&#8242;${etaSeconds}&#8243;</td><td>${padZero(dt.getHours())}:${padZero(dt.getMinutes())}</td>`;
-					});
-					out += '</tr>';
-				}
-				out += '</table>';
-				if (targets.length == 0) {
-					$loading.innerText = "no targets, please click on route";
+			renderInterval = LONG_RENDER_INTERVAL;
+			const targets = candidates(calculateLatLng);
+			let out = `<table border=1><tr><th rowspan=2>name</th><th rowspan=2>${labelUnit}</th><th rowspan=2>avg<br>pace</th>` + targets.map(dst => `<th colspan=2>to ${labelUnit} ${formatDistance(dst.offset)}</th>`).join("") + "</tr>";
+			out += "<tr>" + targets.map(dst => `<th>in</th><th>at</th>`).join("") + "</tr>";
+			for (let name in state) {
+				const userState = state[name];
+				if (userState.estimatedOffset) {
+					const paceSeconds = labelDistance / userState.v;
+					out += `<tr><td>${name}</td><td>${formatDistance(userState.estimatedOffset)}</td><td>${Math.floor(paceSeconds / 60)}&#8242;${padZero(Math.floor(paceSeconds % 60))}&#8243;</td>`
 				} else {
-					$loading.innerHTML = "&nbsp;";
+					continue;
 				}
-				$info.innerHTML = out;
+				
+				targets.forEach(dst => {
+					const deltaD = dst.offset - userState.estimatedOffset;
+					if (deltaD < 0) {
+						out += `<td colspan=2>passed</td>`;
+						return;
+					}
+					const deltaT = deltaD / userState.v;
+					if (deltaT < 180) {
+						renderInterval = Math.min(renderInterval, 1);
+					}else if (deltaT < 360) {
+						renderInterval = Math.min(renderInterval, 5);
+					}
+					const dt = new Date(nowMs + deltaT * 1000);
+					const etaMinutes = Math.floor(deltaT / 60);
+					const etaSeconds = padZero(Math.round(deltaT % 60));
+					out += `<td>${etaMinutes}&#8242;${etaSeconds}&#8243;</td><td>${padZero(dt.getHours())}:${padZero(dt.getMinutes())}</td>`;
+				});
+				out += '</tr>';
+			}
+			out += '</table>';
+			if (targets.length == 0) {
+				$loading.innerText = "no targets, please click on route";
+			} else {
+				$loading.innerHTML = "&nbsp;";
+			}
+			$info.innerHTML = out;
+		}
+		function scheduledTasks() {
+			const nowMs = now();
+			const nowSeconds = Math.floor(nowMs / 1000);
+			if ((nowSeconds - lastLoad) >= 15) {
+				lastLoad = nowSeconds;
+				fetch("./locations", {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({
+							people: null
+						})
+					})
+					.then((response) => response.json())
+					.then((input) => {
+						input.people.forEach(v => {
+							const {name} = v;
+							if (!points[name]) {
+								lastRender = 0;
+							}
+							points[name] = v;
+						});
+					});
+			}
+			if ((nowSeconds - lastRender) >= renderInterval) {
+				lastRender = nowSeconds;
+				render(nowMs);
 			}
 		}
-		render();
-		setInterval(render, 1000);
+		scheduledTasks();
+		setInterval(scheduledTasks, 500);
 	});
