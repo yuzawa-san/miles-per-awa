@@ -23,7 +23,7 @@ fetch("./route")
 		});
 		map.setZoom(15);
 		L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png', {
-			attribution: '<a href="&copy; https://github.com/yuzawa-san/miles-per-awa">yuzawa-san</a>, <a href="http://www.openstreetmap.org/copyright">OSM</a>, &copy; <a href="https://carto.com/attribution">CARTO</a>'
+			attribution: 'miles-per-awa by <a href="&copy; https://github.com/yuzawa-san/miles-per-awa">yuzawa-san</a>, <a href="http://www.openstreetmap.org/copyright">OSM</a>, &copy; <a href="https://carto.com/attribution">CARTO</a>'
 		}).addTo(map);
 
 		const $loading = document.getElementById("loading");
@@ -119,17 +119,13 @@ fetch("./route")
 
 		let $metric = document.getElementById("metric");
 		$metric.onchange = function() {
-			if ($metric.value === 'km') {
-				localStorage.setItem("metric", "1");
-			} else {
-				localStorage.removeItem("metric");
-			}
-			window.location.reload();
+			window.location = "?metric=" + ($metric.value === 'km' ? '1': '0');
 		};
-		let metric = !!localStorage.getItem("metric");
+		let metric = query.metric === '1';
 		if (metric) {
 			$metric.value = 'km';
 		}
+		document.getElementById("icon").src = "icon.png";
 		const labelUnit = metric ? "km" : "mi";
 		const labelDistance = metric ? 1000 : 1609;
 
