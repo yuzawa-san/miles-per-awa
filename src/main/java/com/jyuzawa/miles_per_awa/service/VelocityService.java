@@ -53,14 +53,19 @@ public final class VelocityService {
                 user,
                 (u, old) -> new CalculatedPosition(
                         datapoint,
-                        routePoint.flatMap(pt -> update(
+                        update(
                                 u,
                                 datapoint,
-                                pt.index(),
-                                Optional.ofNullable(old).flatMap(CalculatedPosition::velocity)))));
+                                routePoint,
+                                Optional.ofNullable(old).flatMap(CalculatedPosition::velocity))));
     }
 
-    private static Optional<Velocity> update(String u, Datapoint datapoint, int index, Optional<Velocity> old) {
+    private static Optional<Velocity> update(
+            String u, Datapoint datapoint, Optional<RoutePoint> routePoint, Optional<Velocity> old) {
+        if (routePoint.isEmpty()) {
+            return old;
+        }
+        int index = routePoint.get().index();
         Instant timestamp = datapoint.getTimestamp();
         double newVelocity = datapoint.getVelocity();
         double v;
