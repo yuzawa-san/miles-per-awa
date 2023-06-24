@@ -9,13 +9,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jyuzawa.miles_per_awa.dto.OverlandRequest;
 import com.jyuzawa.miles_per_awa.dto.OverlandRequest.OverlandLocation;
 import com.jyuzawa.miles_per_awa.dto.SuccessResponse;
+import com.jyuzawa.miles_per_awa.entity.CalculatedPosition;
 import com.jyuzawa.miles_per_awa.entity.Datapoint;
-import com.jyuzawa.miles_per_awa.entity.Velocity;
 import com.jyuzawa.miles_per_awa.service.IngestService;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -54,7 +53,7 @@ public class OverlandController {
         OverlandLocation last = locations.get(locations.size() - 1);
         Datapoint point = last.toPoint(first);
         log.info(point.toString());
-        Optional<Velocity> out =
+        CalculatedPosition out =
                 ingestService.ingest(lastLocation.getProperties().getDevice_id(), point);
         log.info(out.toString());
         return SuccessResponse.builder().result("ok").build();

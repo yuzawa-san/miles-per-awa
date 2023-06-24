@@ -4,8 +4,9 @@
  */
 package com.jyuzawa.miles_per_awa.service;
 
+import com.jyuzawa.miles_per_awa.entity.CalculatedPosition;
 import com.jyuzawa.miles_per_awa.entity.Datapoint;
-import com.jyuzawa.miles_per_awa.entity.Velocity;
+import com.jyuzawa.miles_per_awa.entity.RoutePoint;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -17,9 +18,8 @@ public class IngestService {
     private final RouteService routePointService;
     private final VelocityService velocityService;
 
-    public Optional<Velocity> ingest(String user, Datapoint datapoint) {
-        return routePointService
-                .getClosest(datapoint)
-                .map(closest -> velocityService.calculate(user, datapoint, closest.index()));
+    public CalculatedPosition ingest(String user, Datapoint datapoint) {
+        Optional<RoutePoint> closest = routePointService.getClosest(datapoint);
+        return velocityService.calculate(user, datapoint, closest);
     }
 }

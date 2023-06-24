@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 James Yuzawa (https://www.jyuzawa.com/)
+ * Copyright (c) 2022-2023 James Yuzawa (https://www.jyuzawa.com/)
  * All rights reserved. Licensed under the MIT License.
  */
 package com.jyuzawa.miles_per_awa.dto;
@@ -20,8 +20,11 @@ public final class LocationsResponse {
     @Value
     public static final class PersonLocation {
         private final String name;
+        private final long timestampMs;
+        private final double lat;
+        private final double lon;
+        private final long indexTimestampMs;
         private final int index;
         private final double velocity;
-        private final long timestampMs;
     }
 }
