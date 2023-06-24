@@ -224,22 +224,25 @@ fetch("./route")
 					userState.v = point.velocity;
 					const baseOffset = point.index * intervalMeters;
 					userState.estimatedOffset = Math.min(maxDist, baseOffset + (nowMs - point.indexTimestampMs) / 1000 * point.velocity);
-					userState.guessOffset = Math.min(maxDist, baseOffset + (point.timestampMs - point.indexTimestampMs) / 1000 * point.velocity);
+					userState.currentOffset = Math.min(maxDist, baseOffset + (point.timestampMs - point.indexTimestampMs) / 1000 * point.velocity);
 				} else {
 					userState.v = 0;
 					userState.estimatedOffset = 0;
-					userState.guessOffset = 0;
+					userState.currentOffset = 0;
 				}
 				const {marker} =  userState;
-				const currentPosition = L.latLng([point.lat, point.lon]);
-				const guessPosition = latLonForDistance(userState.guessOffset);
-				if (currentPosition.distanceTo(guessPosition) < PATH_SNAP_METER) {
+				const lastPosition = L.latLng([point.lat, point.lon]);
+				const currentPosition = latLonForDistance(userState.currentOffset);
+				if (lastPosition.distanceTo(currentPosition) < PATH_SNAP_METER) {
 					const coursePosition = latLonForDistance(userState.estimatedOffset);
 					marker.setLatLng(coursePosition);
 					marker.setContent(name);
 				} else {
-					marker.setLatLng(currentPosition);
-					marker.setContent(name + "*");
+					marker.setLatLng(lastPosition);
+					const deltaT = (nowMs - point.timestampMs) / 1000;
+					const elapsedMinutes = Math.floor(deltaT / 60);
+					const elapsedSeconds = padZero(Math.round(deltaT % 60));
+					marker.setContent(`${name}*<br><small>${elapsedMinutes}&#8242;${elapsedSeconds}&#8243; ago</small>`);
 				}
 			}
 			renderInterval = LONG_RENDER_INTERVAL;

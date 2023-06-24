@@ -58,6 +58,9 @@ th {
     box-shadow: none;
     font-size: 8px;
 }
+.leaflet-tooltip {
+    line-height: 1em;
+}
 #title {
     font-weight: bold;
 }
