@@ -89,6 +89,14 @@ public class MilesPerAwaTest {
                         .coordinates(List.of(9.002d, 10d))
                         .build())
                 .build();
+        client.post()
+                .uri("/locations")
+                .bodyValue(LocationsRequest.builder().build())
+                .exchange()
+                .expectBody(LocationsResponse.class)
+                .consumeWith(r -> {
+                    assertTrue(r.getResponseBody().getPeople().isEmpty());
+                });
         OverlandRequest request =
                 OverlandRequest.builder().locations(List.of(o1, o2)).build();
         client.post()
@@ -106,7 +114,9 @@ public class MilesPerAwaTest {
                 .exchange()
                 .expectBody(LocationsResponse.class)
                 .consumeWith(r -> {
-                    assertTrue(r.getResponseBody().getPeople().isEmpty());
+                    assertEquals("james", r.getResponseBody().getPeople().get(0).getName());
+                    assertEquals(10d, r.getResponseBody().getPeople().get(0).getLat(), 0.0001);
+                    assertEquals(9.002d, r.getResponseBody().getPeople().get(0).getLon(), 0.0001);
                 });
 
         OverlandLocation first = OverlandLocation.builder()
