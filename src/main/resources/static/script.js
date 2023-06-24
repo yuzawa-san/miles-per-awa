@@ -220,9 +220,27 @@ fetch("./route")
 					}
 					state[name] = userState;
 				}
-				userState.v = point.velocity;
-				userState.estimatedOffset = Math.min(maxDist, (point.index * intervalMeters) + (nowMs - point.timestampMs) / 1000 * point.velocity);
-				userState.marker.setLatLng(latLonForDistance(userState.estimatedOffset));
+				if (point.indexTimestampMs) {
+					userState.v = point.velocity;
+					const baseOffset = point.index * intervalMeters;
+					userState.estimatedOffset = Math.min(maxDist, baseOffset + (nowMs - point.indexTimestampMs) / 1000 * point.velocity);
+					userState.guessOffset = Math.min(maxDist, baseOffset + (point.timestampMs - point.indexTimestampMs) / 1000 * point.velocity);
+				} else {
+					userState.v = 0;
+					userState.estimatedOffset = 0;
+					userState.guessOffset = 0;
+				}
+				const {marker} =  userState;
+				const currentPosition = L.latLng([point.lat, point.lon]);
+				const guessPosition = latLonForDistance(userState.guessOffset);
+				if (currentPosition.distanceTo(guessPosition) < PATH_SNAP_METER) {
+					const coursePosition = latLonForDistance(userState.estimatedOffset);
+					marker.setLatLng(coursePosition);
+					marker.setContent(name);
+				} else {
+					marker.setLatLng(currentPosition);
+					marker.setContent(name + "*");
+				}
 			}
 			renderInterval = LONG_RENDER_INTERVAL;
 			const targets = candidates(calculateLatLng);
