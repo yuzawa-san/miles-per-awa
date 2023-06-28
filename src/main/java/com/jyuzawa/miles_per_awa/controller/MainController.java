@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 James Yuzawa (https://www.jyuzawa.com/)
+ * Copyright (c) 2022-2023 James Yuzawa (https://www.jyuzawa.com/)
  * All rights reserved. Licensed under the MIT License.
  */
 package com.jyuzawa.miles_per_awa.controller;
@@ -7,8 +7,11 @@ package com.jyuzawa.miles_per_awa.controller;
 import com.jyuzawa.miles_per_awa.dto.LocationsRequest;
 import com.jyuzawa.miles_per_awa.dto.LocationsResponse;
 import com.jyuzawa.miles_per_awa.dto.LocationsResponse.PersonLocation;
+import com.jyuzawa.miles_per_awa.dto.LocationsResponse.PersonLocation.PersonLocationBuilder;
 import com.jyuzawa.miles_per_awa.dto.RouteResponse;
-import com.jyuzawa.miles_per_awa.entity.Velocity;
+import com.jyuzawa.miles_per_awa.entity.CalculatedPosition;
+import com.jyuzawa.miles_per_awa.entity.Datapoint;
+import com.jyuzawa.miles_per_awa.entity.LatLng;
 import com.jyuzawa.miles_per_awa.service.RouteService;
 import com.jyuzawa.miles_per_awa.service.VelocityService;
 import java.util.List;
@@ -39,13 +42,20 @@ public class MainController {
     public LocationsResponse locations(@RequestBody LocationsRequest in) {
         List<PersonLocation> personLocations = velocityService.getUsers(in.getPeople()).entrySet().stream()
                 .map(entry -> {
-                    Velocity velocity = entry.getValue();
-                    return PersonLocation.builder()
+                    CalculatedPosition calculatedPosition = entry.getValue();
+                    Datapoint position = calculatedPosition.position();
+                    LatLng coords = position.getCoords();
+                    PersonLocationBuilder person = PersonLocation.builder()
                             .name(entry.getKey())
-                            .index(velocity.index())
-                            .timestampMs(velocity.timestamp().toEpochMilli())
-                            .velocity(velocity.velocity())
-                            .build();
+                            .lat(coords.latitude())
+                            .lon(coords.longitude())
+                            .timestampMs(position.getTimestamp().toEpochMilli());
+                    calculatedPosition.velocity().ifPresent(velocity -> {
+                        person.index(velocity.index())
+                                .indexTimestampMs(velocity.timestamp().toEpochMilli())
+                                .velocity(velocity.velocity());
+                    });
+                    return person.build();
                 })
                 .toList();
         return LocationsResponse.builder().people(personLocations).build();

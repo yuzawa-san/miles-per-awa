@@ -23,8 +23,8 @@ fetch("./route")
 			zoomControl: false
 		});
 		map.setZoom(15);
-		L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png', {
-			attribution: 'miles-per-awa by <a href="&copy; https://github.com/yuzawa-san/miles-per-awa">yuzawa-san</a>, <a href="http://www.openstreetmap.org/copyright">OSM</a>, &copy; <a href="https://carto.com/attribution">CARTO</a>'
+		L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png', {
+			attribution: '<a href="&copy; https://github.com/yuzawa-san/miles-per-awa">yuzawa-san</a>, <a href="http://www.openstreetmap.org/copyright">OSM</a>, &copy; <a href="https://carto.com/attribution">CARTO</a>'
 		}).addTo(map);
 
 		const $loading = document.getElementById("loading");
@@ -50,7 +50,6 @@ fetch("./route")
 			name,
 			intervalMeters,
 		} = input;
-		document.getElementById("name").innerText = name;
 		for (let i = 0; i < input.rawPath.length; i += 2) {
 			normalPath.push(L.latLng([rawPath[i], rawPath[i + 1]]));
 		}
@@ -110,7 +109,9 @@ fetch("./route")
 		if (metric) {
 			$metric.value = 'km';
 		}
-		document.getElementById("icon").src = metric ? "metric-icon.png" : "icon.png";
+		const title = (metric ? "kilometers" : "miles") + "-per-awa";
+		document.getElementById("title").innerText = title;
+		document.title = title;
 		const labelUnit = metric ? "km" : "mi";
 		const labelDistance = metric ? 1000 : 1609;
 
@@ -123,8 +124,8 @@ fetch("./route")
 			let circle = L.circleMarker(tooltipLocation, {
 				radius: 7,
 				stroke: false,
-				fillOpacity: 0.7,
-				color: 'black',
+				fillOpacity: 0.85,
+				color: 'white',
 				interactive: false
 			});
 			circle.addTo(map);
@@ -220,9 +221,33 @@ fetch("./route")
 					}
 					state[name] = userState;
 				}
-				userState.v = point.velocity;
-				userState.estimatedOffset = Math.min(maxDist, (point.index * intervalMeters) + (nowMs - point.timestampMs) / 1000 * point.velocity);
-				userState.marker.setLatLng(latLonForDistance(userState.estimatedOffset));
+				if (point.indexTimestampMs) {
+					userState.v = point.velocity;
+					const baseOffset = point.index * intervalMeters;
+					userState.estimatedOffset = Math.min(maxDist, baseOffset + (nowMs - point.indexTimestampMs) / 1000 * point.velocity);
+					userState.currentOffset = Math.min(maxDist, baseOffset + (point.timestampMs - point.indexTimestampMs) / 1000 * point.velocity);
+				} else {
+					userState.v = 0;
+					userState.estimatedOffset = 0;
+					userState.currentOffset = 0;
+				}
+				const {
+					marker
+				} = userState;
+				const lastPosition = L.latLng([point.lat, point.lon]);
+				const currentPosition = latLonForDistance(userState.currentOffset);
+				userState.onPath = lastPosition.distanceTo(currentPosition) < PATH_SNAP_METER;
+				if (userState.onPath) {
+					const coursePosition = latLonForDistance(userState.estimatedOffset);
+					marker.setLatLng(coursePosition);
+					marker.setContent(name);
+				} else {
+					marker.setLatLng(lastPosition);
+					const deltaT = (nowMs - point.timestampMs) / 1000;
+					const elapsedMinutes = Math.floor(deltaT / 60);
+					const elapsedSeconds = padZero(Math.round(deltaT % 60));
+					marker.setContent(`${name}*<br><small>${elapsedMinutes}&#8242;${elapsedSeconds}&#8243; ago</small>`);
+				}
 			}
 			renderInterval = LONG_RENDER_INTERVAL;
 			const targets = candidates(calculateLatLng);
@@ -230,16 +255,18 @@ fetch("./route")
 			out += "<tr>" + targets.map(dst => `<th>in</th><th>at</th>`).join("") + "</tr>";
 			for (let name in state) {
 				const userState = state[name];
-				if (userState.estimatedOffset) {
-					const paceSeconds = labelDistance / userState.v;
-					out += `<tr><td>${name}</td><td>${formatDistance(userState.estimatedOffset)}</td><td>${Math.floor(paceSeconds / 60)}&#8242;${padZero(Math.floor(paceSeconds % 60))}&#8243;</td>`
-				} else {
-					continue;
-				}
-
+				const {
+					v
+				} = userState;
+				const paceSeconds = v == 0 ? 0 : labelDistance / userState.v;
+				out += `<tr><td>${name}</td><td>${formatDistance(userState.estimatedOffset)}${userState.onPath ? '' : '?'}</td><td>${Math.floor(paceSeconds / 60)}&#8242;${padZero(Math.floor(paceSeconds % 60))}&#8243;</td>`;
 				targets.forEach(dst => {
+					if (v == 0) {
+						out += `<td colspan=2>unknown</td>`;
+						return;
+					}
 					const deltaD = dst.offset - userState.estimatedOffset;
-					const deltaT = deltaD / userState.v;
+					const deltaT = deltaD / v;
 					if (deltaT > -60 && deltaT < 180) {
 						renderInterval = Math.min(renderInterval, 1);
 					} else if (deltaT < 360) {
