@@ -22,7 +22,8 @@ html, body, #map {
     overflow: auto;
     -webkit-overflow-scrolling: touch;
     z-index: 99999;
-    background: rgba(255,255,255,0.9);
+    background: rgba(0,0,0,0.9);
+    color: white;
     box-shadow: 1px 1px 5px gray;
 }
 #info {
@@ -38,7 +39,7 @@ table {
 td, th {
     font-size: 11px;
     padding: 2px;
-    font-family: Inconsolata, monospace
+    font-family: Inconsolata, monospace;
 }
 td {
     text-align: right;
@@ -48,10 +49,9 @@ tr:nth-child(2n) {
 }
 th {
     background: rgb(254, 67, 0);
-    color: white;
 }
 .leaflet-marker-pane .text {
-    color: white;
+    color: black;
     font-weight: bold;
     background: transparent;
     border: 0;
