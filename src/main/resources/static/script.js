@@ -233,7 +233,8 @@ fetch("./route")
 				const {marker} =  userState;
 				const lastPosition = L.latLng([point.lat, point.lon]);
 				const currentPosition = latLonForDistance(userState.currentOffset);
-				if (lastPosition.distanceTo(currentPosition) < PATH_SNAP_METER) {
+				userState.onPath = lastPosition.distanceTo(currentPosition) < PATH_SNAP_METER;
+				if (userState.onPath) {
 					const coursePosition = latLonForDistance(userState.estimatedOffset);
 					marker.setLatLng(coursePosition);
 					marker.setContent(name);
@@ -251,16 +252,16 @@ fetch("./route")
 			out += "<tr>" + targets.map(dst => `<th>in</th><th>at</th>`).join("") + "</tr>";
 			for (let name in state) {
 				const userState = state[name];
-				if (userState.estimatedOffset) {
-					const paceSeconds = labelDistance / userState.v;
-					out += `<tr><td>${name}</td><td>${formatDistance(userState.estimatedOffset)}</td><td>${Math.floor(paceSeconds / 60)}&#8242;${padZero(Math.floor(paceSeconds % 60))}&#8243;</td>`
-				} else {
-					continue;
-				}
-
+				const {v} = userState;
+				const paceSeconds = v == 0 ? 0 : labelDistance / userState.v;
+				out += `<tr><td>${name}</td><td>${formatDistance(userState.estimatedOffset)}${userState.onPath ? '' : '?'}</td><td>${Math.floor(paceSeconds / 60)}&#8242;${padZero(Math.floor(paceSeconds % 60))}&#8243;</td>`;
 				targets.forEach(dst => {
+					if (v == 0) {
+						out += `<td colspan=2>unknown</td>`;
+						return;
+					}
 					const deltaD = dst.offset - userState.estimatedOffset;
-					const deltaT = deltaD / userState.v;
+					const deltaT = deltaD / v;
 					if (deltaT > -60 && deltaT < 180) {
 						renderInterval = Math.min(renderInterval, 1);
 					} else if (deltaT < 360) {
