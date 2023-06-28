@@ -230,7 +230,9 @@ fetch("./route")
 					userState.estimatedOffset = 0;
 					userState.currentOffset = 0;
 				}
-				const {marker} =  userState;
+				const {
+					marker
+				} = userState;
 				const lastPosition = L.latLng([point.lat, point.lon]);
 				const currentPosition = latLonForDistance(userState.currentOffset);
 				userState.onPath = lastPosition.distanceTo(currentPosition) < PATH_SNAP_METER;
@@ -252,7 +254,9 @@ fetch("./route")
 			out += "<tr>" + targets.map(dst => `<th>in</th><th>at</th>`).join("") + "</tr>";
 			for (let name in state) {
 				const userState = state[name];
-				const {v} = userState;
+				const {
+					v
+				} = userState;
 				const paceSeconds = v == 0 ? 0 : labelDistance / userState.v;
 				out += `<tr><td>${name}</td><td>${formatDistance(userState.estimatedOffset)}${userState.onPath ? '' : '?'}</td><td>${Math.floor(paceSeconds / 60)}&#8242;${padZero(Math.floor(paceSeconds % 60))}&#8243;</td>`;
 				targets.forEach(dst => {

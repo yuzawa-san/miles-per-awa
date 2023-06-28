@@ -41,7 +41,7 @@ td, th {
     font-family: Inconsolata, monospace
 }
 td {
-    text-align:right;
+    text-align: right;
 }
 tr:nth-child(2n) {
     background: rgba(128,128,128,0.1);
