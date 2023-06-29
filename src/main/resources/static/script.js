@@ -31,7 +31,7 @@ fetch("./route")
 		}).addTo(map);
 		map.setZoom(15);
 		L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png', {
-			attribution: '&copy; <a href="https://github.com/yuzawa-san/miles-per-awa">yuzawa-san</a>, <a href="http://www.openstreetmap.org/copyright">OSM</a>, &copy; <a href="https://carto.com/attribution">CARTO</a>'
+			attribution: '&copy; <a href="https://github.com/yuzawa-san/miles-per-awa">yuzawa-san</a>, <a href="http://www.openstreetmap.org/copyright">OSM</a>, <a href="https://carto.com/attribution">CARTO</a>'
 		}).addTo(map);
 
 		const $loading = document.getElementById("loading");
