@@ -20,11 +20,18 @@ fetch("./route")
 		const now = () => baseMs + Date.now() - startMs;
 
 		const map = L.map('map', {
-			zoomControl: false
+			zoomControl: false,
+			attributionControl: false
 		});
+		L.control.attribution({
+			position: 'topright'
+		}).addTo(map);
+		L.control.scale({
+			position: 'topleft'
+		}).addTo(map);
 		map.setZoom(15);
 		L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png', {
-			attribution: '<a href="&copy; https://github.com/yuzawa-san/miles-per-awa">yuzawa-san</a>, <a href="http://www.openstreetmap.org/copyright">OSM</a>, &copy; <a href="https://carto.com/attribution">CARTO</a>'
+			attribution: '&copy; <a href="https://github.com/yuzawa-san/miles-per-awa">yuzawa-san</a>, <a href="http://www.openstreetmap.org/copyright">OSM</a>, &copy; <a href="https://carto.com/attribution">CARTO</a>'
 		}).addTo(map);
 
 		const $loading = document.getElementById("loading");
@@ -57,7 +64,7 @@ fetch("./route")
 			color: 'rgb(254, 67, 0)',
 			weight: 4
 		}).addTo(map);
-		map.fitBounds(routePolyline.getBounds().pad(0.3));
+		map.fitBounds(routePolyline.getBounds());
 		setLocation(map.getCenter());
 
 		const locationCircle = L.circle([0, 0], 1);
