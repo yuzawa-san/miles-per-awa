@@ -50,14 +50,14 @@ public class MainController {
         List<PersonLocation> personLocations = velocityService.getUsers(in.getPeople()).entrySet().stream()
                 .map(entry -> {
                     CalculatedPosition calculatedPosition = entry.getValue();
-                    Datapoint position = calculatedPosition.position();
+                    Datapoint position = calculatedPosition.getPosition();
                     LatLng coords = position.getCoords();
                     PersonLocationBuilder person = PersonLocation.builder()
                             .name(entry.getKey())
                             .lat(coords.latitude())
                             .lon(coords.longitude())
                             .timestampMs(position.getTimestamp().toEpochMilli());
-                    calculatedPosition.velocity().ifPresent(velocity -> {
+                    calculatedPosition.getVelocity().ifPresent(velocity -> {
                         person.index(velocity.index())
                                 .indexTimestampMs(velocity.timestamp().toEpochMilli())
                                 .velocity(velocity.velocity());

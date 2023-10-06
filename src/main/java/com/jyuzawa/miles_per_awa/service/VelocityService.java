@@ -8,17 +8,18 @@ import com.jyuzawa.miles_per_awa.entity.CalculatedPosition;
 import com.jyuzawa.miles_per_awa.entity.Datapoint;
 import com.jyuzawa.miles_per_awa.entity.RoutePoint;
 import com.jyuzawa.miles_per_awa.entity.Velocity;
+
+import lombok.RequiredArgsConstructor;
+
 import java.time.Instant;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-@Component
+@RequiredArgsConstructor
+@Service
 public final class VelocityService {
     // empirically determined for biking and running
     private static final long TIMEBUCKET_SECONDS = 30;
@@ -26,38 +27,28 @@ public final class VelocityService {
     // from 4mph avg walking speed
     private static final double MIN_VELOCITY = 1.78816;
 
-    private final Map<String, CalculatedPosition> users;
-
-    @Autowired
-    public VelocityService() {
-        // TODO: better storage
-        this.users = new ConcurrentHashMap<>();
-    }
+    private final VelocityRepository repository;
 
     public Map<String, CalculatedPosition> getUsers(Collection<String> userIds) {
-        if (userIds == null) {
-            return Collections.unmodifiableMap(users);
-        }
-        Map<String, CalculatedPosition> out = new HashMap<>(userIds.size());
-        for (String userId : userIds) {
-            CalculatedPosition velocity = users.get(userId);
-            if (velocity != null) {
-                out.put(userId, velocity);
-            }
-        }
+        	Iterable<CalculatedPosition> velocities = userIds == null ? repository.findAll(): repository.findAllById(userIds);
+        	 Map<String, CalculatedPosition> out = new HashMap<>();
+for(CalculatedPosition velocity : velocities) {
+	out.put(velocity.getId(), velocity);
+}
         return out;
     }
 
     public CalculatedPosition calculate(String user, Datapoint datapoint, Optional<RoutePoint> routePoint) {
-        return users.compute(
-                user,
-                (u, old) -> new CalculatedPosition(
+    	Optional<CalculatedPosition> old = repository.findById(user);
+        CalculatedPosition out = new CalculatedPosition(
                         datapoint,
                         update(
-                                u,
+                                user,
                                 datapoint,
                                 routePoint,
-                                Optional.ofNullable(old).flatMap(CalculatedPosition::velocity))));
+                                old.flatMap(CalculatedPosition::getVelocity)));
+        repository.save(out);
+        return out;
     }
 
     private static Optional<Velocity> update(
