@@ -126,7 +126,25 @@ fetch("./route")
 			return (dist / labelDistance).toFixed(1);
 		}
 		const maxDist = normalPath.length * intervalMeters;
-		for (let m = 0; m * labelDistance < maxDist; m++) {
+		let startCircle = L.circleMarker(latLonForDistance(0), {
+			radius: 7,
+			fillColor: 'green',
+			weight: 1,
+			fillOpacity: 1,
+			color: 'white',
+			interactive: false
+		});
+		startCircle.addTo(map);
+		let endCircle = L.circleMarker(latLonForDistance(maxDist), {
+			radius: 7,
+			fillColor: 'red',
+			weight: 1,
+			fillOpacity: 1,
+			color: 'white',
+			interactive: false
+		});
+		endCircle.addTo(map);
+		for (let m = 1; m * labelDistance < maxDist; m++) {
 			let tooltipLocation = latLonForDistance(m * labelDistance);
 			let circle = L.circleMarker(tooltipLocation, {
 				radius: 7,
