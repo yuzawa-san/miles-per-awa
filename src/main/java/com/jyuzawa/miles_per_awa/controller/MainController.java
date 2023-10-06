@@ -12,10 +12,14 @@ import com.jyuzawa.miles_per_awa.dto.RouteResponse;
 import com.jyuzawa.miles_per_awa.entity.CalculatedPosition;
 import com.jyuzawa.miles_per_awa.entity.Datapoint;
 import com.jyuzawa.miles_per_awa.entity.LatLng;
+import com.jyuzawa.miles_per_awa.service.RoutePointsService;
 import com.jyuzawa.miles_per_awa.service.RouteService;
 import com.jyuzawa.miles_per_awa.service.VelocityService;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.CacheControl;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,18 +28,21 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RestController
 public class MainController {
-
+    private final RoutePointsService routePointsService;
     private final RouteService routeService;
     private final VelocityService velocityService;
 
     @GetMapping("/route")
-    public RouteResponse route() {
-        return RouteResponse.builder()
-                .name(routeService.getName())
-                .imperialUnits(routeService.isImperialUnits())
-                .intervalMeters(routeService.getIntervalMeters())
-                .rawPath(routeService.getRawPath())
-                .build();
+    public ResponseEntity<RouteResponse> route() {
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.maxAge(6, TimeUnit.HOURS))
+                .lastModified(routePointsService.getLastModified())
+                .body(RouteResponse.builder()
+                        .name(routeService.getName())
+                        .imperialUnits(routeService.isImperialUnits())
+                        .intervalMeters(routeService.getIntervalMeters())
+                        .rawPath(routeService.getRawPath())
+                        .build());
     }
 
     @PostMapping("/locations")
