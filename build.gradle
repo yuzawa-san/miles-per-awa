@@ -14,8 +14,10 @@ apply plugin: "idea"
 apply plugin: "application"
 apply plugin: "jacoco"
 
-sourceCompatibility = 17
-targetCompatibility = 17
+java {
+	sourceCompatibility = 17
+	targetCompatibility = 17
+}
 
 group = 'com.jyuzawa'
 description="The most accurate personal race course tracker."
@@ -92,7 +94,9 @@ def getGitHash = { ->
 	return stdout.toString().trim()
 }
 
-mainClassName = 'com.jyuzawa.miles_per_awa.MilesPerAwa'
+application {
+	mainClass = 'com.jyuzawa.miles_per_awa.MilesPerAwa'
+}
 
 jar {
 	doFirst {
