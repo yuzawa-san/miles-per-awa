@@ -62,6 +62,7 @@ fetch("./route")
 		}
 		const routePolyline = L.polyline(normalPath, {
 			color: 'rgb(254, 67, 0)',
+			interactive: false,
 			weight: 4
 		}).addTo(map);
 		map.fitBounds(routePolyline.getBounds());
