@@ -1,3 +1,11 @@
+spring:
+  application:
+    name: miles-per-awa
+server:
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json,application/xml
+    min-response-size: 2KB
 route:
   name: Testing
   path: /Users/jtyuzawa/Documents/nyc.csv
