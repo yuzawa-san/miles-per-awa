@@ -10,8 +10,6 @@ import com.jyuzawa.miles_per_awa.dto.LocationsResponse.PersonLocation;
 import com.jyuzawa.miles_per_awa.dto.LocationsResponse.PersonLocation.PersonLocationBuilder;
 import com.jyuzawa.miles_per_awa.dto.RouteResponse;
 import com.jyuzawa.miles_per_awa.entity.CalculatedPosition;
-import com.jyuzawa.miles_per_awa.entity.Datapoint;
-import com.jyuzawa.miles_per_awa.entity.LatLng;
 import com.jyuzawa.miles_per_awa.service.RoutePointsService;
 import com.jyuzawa.miles_per_awa.service.RouteService;
 import com.jyuzawa.miles_per_awa.service.VelocityService;
@@ -50,13 +48,12 @@ public class MainController {
         List<PersonLocation> personLocations = velocityService.getUsers(in.getPeople()).entrySet().stream()
                 .map(entry -> {
                     CalculatedPosition calculatedPosition = entry.getValue();
-                    Datapoint position = calculatedPosition.getPosition();
-                    LatLng coords = position.getCoords();
                     PersonLocationBuilder person = PersonLocation.builder()
                             .name(entry.getKey())
-                            .lat(coords.latitude())
-                            .lon(coords.longitude())
-                            .timestampMs(position.getTimestamp().toEpochMilli());
+                            .lat(calculatedPosition.getLatitude())
+                            .lon(calculatedPosition.getLongitude())
+                            .timestampMs(
+                                    calculatedPosition.getPositionTimestamp().toEpochMilli());
                     calculatedPosition.getVelocity().ifPresent(velocity -> {
                         person.index(velocity.index())
                                 .indexTimestampMs(velocity.timestamp().toEpochMilli())

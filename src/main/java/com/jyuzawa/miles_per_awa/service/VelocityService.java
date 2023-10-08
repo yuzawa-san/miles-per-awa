@@ -8,14 +8,12 @@ import com.jyuzawa.miles_per_awa.entity.CalculatedPosition;
 import com.jyuzawa.miles_per_awa.entity.Datapoint;
 import com.jyuzawa.miles_per_awa.entity.RoutePoint;
 import com.jyuzawa.miles_per_awa.entity.Velocity;
-
-import lombok.RequiredArgsConstructor;
-
 import java.time.Instant;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
@@ -30,23 +28,19 @@ public final class VelocityService {
     private final VelocityRepository repository;
 
     public Map<String, CalculatedPosition> getUsers(Collection<String> userIds) {
-        	Iterable<CalculatedPosition> velocities = userIds == null ? repository.findAll(): repository.findAllById(userIds);
-        	 Map<String, CalculatedPosition> out = new HashMap<>();
-for(CalculatedPosition velocity : velocities) {
-	out.put(velocity.getId(), velocity);
-}
+        Iterable<CalculatedPosition> velocities =
+                userIds == null ? repository.findAll() : repository.findAllById(userIds);
+        Map<String, CalculatedPosition> out = new HashMap<>();
+        for (CalculatedPosition velocity : velocities) {
+            out.put(velocity.getId(), velocity);
+        }
         return out;
     }
 
     public CalculatedPosition calculate(String user, Datapoint datapoint, Optional<RoutePoint> routePoint) {
-    	Optional<CalculatedPosition> old = repository.findById(user);
+        Optional<CalculatedPosition> old = repository.findById(user);
         CalculatedPosition out = new CalculatedPosition(
-                        datapoint,
-                        update(
-                                user,
-                                datapoint,
-                                routePoint,
-                                old.flatMap(CalculatedPosition::getVelocity)));
+                user, datapoint, update(user, datapoint, routePoint, old.flatMap(CalculatedPosition::getVelocity)));
         repository.save(out);
         return out;
     }

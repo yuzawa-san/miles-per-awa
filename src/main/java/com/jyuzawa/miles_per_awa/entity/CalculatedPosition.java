@@ -4,24 +4,51 @@
  */
 package com.jyuzawa.miles_per_awa.entity;
 
-import java.util.Optional;
-
+import jakarta.annotation.Nullable;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import java.time.Instant;
+import java.util.Optional;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Data
 @NoArgsConstructor
-public class CalculatedPosition{ 
-	@Id
-	private String id;
-	private Datapoint position;
-	private Optional<Velocity> velocity;
-	
-	public CalculatedPosition(Datapoint position, Optional<Velocity> velocity) {
-		this.position = position;
-		this.velocity = velocity;
-	}
+public class CalculatedPosition {
+    @Id
+    private String id;
+
+    private Instant positionTimestamp;
+    private double latitude;
+    private double longitude;
+
+    @Nullable
+    private Instant timestamp;
+
+    private int index;
+    private double lastVelocity;
+    private double velocity;
+
+    public CalculatedPosition(String id, Datapoint position, Optional<Velocity> velocity) {
+        this.id = id;
+        this.positionTimestamp = position.getTimestamp();
+        LatLng coords = position.getCoords();
+        this.latitude = coords.latitude();
+        this.longitude = coords.longitude();
+        if (velocity.isPresent()) {
+            Velocity theVelocity = velocity.get();
+            this.timestamp = theVelocity.timestamp();
+            this.index = theVelocity.index();
+            this.lastVelocity = theVelocity.lastVelocity();
+            this.velocity = theVelocity.velocity();
+        }
+    }
+
+    public Optional<Velocity> getVelocity() {
+        if (timestamp == null) {
+            return Optional.empty();
+        }
+        return Optional.of(new Velocity(timestamp, index, lastVelocity, velocity));
+    }
 }
