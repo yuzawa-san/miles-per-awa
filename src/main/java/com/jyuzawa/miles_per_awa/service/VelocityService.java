@@ -6,6 +6,7 @@ package com.jyuzawa.miles_per_awa.service;
 
 import com.jyuzawa.miles_per_awa.entity.CalculatedPosition;
 import com.jyuzawa.miles_per_awa.entity.Datapoint;
+import com.jyuzawa.miles_per_awa.entity.LatLng;
 import com.jyuzawa.miles_per_awa.entity.RoutePoint;
 import com.jyuzawa.miles_per_awa.entity.Velocity;
 import java.time.Instant;
@@ -32,6 +33,14 @@ public final class VelocityService {
     public VelocityService() {
         // TODO: better storage
         this.users = new ConcurrentHashMap<>();
+        this.users.put(
+                "test",
+                new CalculatedPosition(
+                        Datapoint.builder()
+                                .timestamp(Instant.now())
+                                .coords(new LatLng(41.88078630977681, -87.62078016238706))
+                                .build(),
+                        Optional.of(new Velocity(Instant.parse("2023-10-08T12:30:00Z"), 0, 3.4314, 3.4314))));
     }
 
     public Map<String, CalculatedPosition> getUsers(Collection<String> userIds) {

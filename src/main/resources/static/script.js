@@ -250,8 +250,8 @@ fetch("./route")
 				if (point.indexTimestampMs) {
 					userState.v = point.velocity;
 					const baseOffset = point.index * intervalMeters;
-					userState.estimatedOffset = Math.min(maxDist, baseOffset + (nowMs - point.indexTimestampMs) / 1000 * point.velocity);
-					userState.currentOffset = Math.min(maxDist, baseOffset + (point.timestampMs - point.indexTimestampMs) / 1000 * point.velocity);
+					userState.estimatedOffset = Math.max(0, Math.min(maxDist, baseOffset + (nowMs - point.indexTimestampMs) / 1000 * point.velocity));
+					userState.currentOffset = Math.max(0, Math.min(maxDist, baseOffset + (point.timestampMs - point.indexTimestampMs) / 1000 * point.velocity));
 				} else {
 					userState.v = 0;
 					userState.estimatedOffset = 0;
