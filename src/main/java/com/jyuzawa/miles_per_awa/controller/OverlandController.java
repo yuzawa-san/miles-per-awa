@@ -11,12 +11,16 @@ import com.jyuzawa.miles_per_awa.dto.OverlandRequest.OverlandLocation;
 import com.jyuzawa.miles_per_awa.dto.SuccessResponse;
 import com.jyuzawa.miles_per_awa.entity.CalculatedPosition;
 import com.jyuzawa.miles_per_awa.entity.Datapoint;
+import com.jyuzawa.miles_per_awa.entity.LatLng;
 import com.jyuzawa.miles_per_awa.service.IngestService;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,13 +36,23 @@ public class OverlandController {
 
     private final IngestService ingestService;
 
+    private final int intervalMeters =30;
+
     @PostMapping("/overland")
     public SuccessResponse overland(@RequestBody JsonNode in) {
         log.info("data: " + in);
         OverlandRequest r = jacksonObjectMapper.convertValue(in, OverlandRequest.class);
+        for(Datapoint point : convert(r)) {
+        	CalculatedPosition out = ingestService.ingest(point.getUser(), point);
+			log.info("POS "+out);
+        }
+        return SuccessResponse.builder().result("ok").build();
+    }
+    
+    public List<Datapoint> convert(OverlandRequest r) {
         List<OverlandLocation> locations = r.getLocations();
         if (locations == null) {
-            return SuccessResponse.builder().result("empty").build();
+            return List.of();
         }
         OverlandLocation lastLocation = locations.get(locations.size() - 1);
         Instant minTimestamp = lastLocation.getProperties().getTimestamp().minus(MAX_LOOKBACK);
@@ -47,15 +61,39 @@ public class OverlandController {
                 .filter(location -> location.getProperties().getTimestamp().isAfter(minTimestamp))
                 .toList();
         if (locations.size() < 2) {
-            return SuccessResponse.builder().result("filtered").build();
+            return List.of();
         }
-        OverlandLocation first = locations.get(0);
-        OverlandLocation last = locations.get(locations.size() - 1);
-        Datapoint point = last.toPoint(first);
-        log.info(point.toString());
-        CalculatedPosition out =
-                ingestService.ingest(lastLocation.getProperties().getDevice_id(), point);
-        log.info(out.toString());
-        return SuccessResponse.builder().result("ok").build();
+        List<Datapoint> datapoints = new ArrayList<>();
+        int n = locations.size();
+        int i = 0;
+        lbl:
+        while(i < n) {
+        	OverlandLocation start = locations.get(i);
+        	LatLng startCoords = start.getGeometry().getLatLng();
+			//System.out.println("["+startCoords.longitude() + ","+startCoords.latitude()+"],");
+        	int j = i + 1;
+        	while(j < n) {
+        		OverlandLocation candidate = locations.get(j);
+        		LatLng candidateCoords = candidate.getGeometry().getLatLng();
+        		double d = startCoords.distance(candidateCoords);
+        		if(d > intervalMeters) {
+        			i = j;
+        			Instant timestamp = candidate.getProperties().getTimestamp();
+        			Datapoint datapoint = Datapoint.builder()
+        					.user(start.getProperties().getDevice_id())
+        	                .timestamp(timestamp)
+        	                .coords(candidateCoords)
+        	                .heading(startCoords.heading(candidateCoords))
+        	                .velocity(d
+        	                        / (timestamp.getEpochSecond() - start.getProperties().getTimestamp().getEpochSecond()))
+        	                .build();
+        			datapoints.add(datapoint);
+        			continue lbl;
+        		}
+        		j++;
+        	}
+        	i++;
+        }
+        return datapoints;
     }
 }

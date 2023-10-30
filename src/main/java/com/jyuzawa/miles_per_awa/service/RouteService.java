@@ -38,7 +38,7 @@ public final class RouteService {
     public RouteService(
             @Value("${route.name}") String name,
             @Value("${route.imperialUnits:false}") boolean imperialUnits,
-            @Value("${route.intervalMeters:25}") int intervalMeters,
+            @Value("${route.intervalMeters:30}") int intervalMeters,
             RoutePointsService routePointsService) {
         this(name, imperialUnits, intervalMeters, routePointsService.getPoints());
     }
@@ -79,7 +79,7 @@ public final class RouteService {
         LatLng coords = datapoint.getCoords();
         List<RoutePoint> candidates = normalPath.stream()
                 .map(routePoint -> new Candidate(routePoint, coords.distance(routePoint.coords())))
-                .filter(candidate -> candidate.distance() < intervalMeters / 2)
+                .filter(candidate -> candidate.distance() < intervalMeters / 2 && candidate.routePoint().headingMatches(datapoint.getHeading()))
                 .sorted(Comparator.comparing(Candidate::distance))
                 .map(Candidate::routePoint)
                 .toList();
@@ -87,14 +87,7 @@ public final class RouteService {
             // there is a single candidate
             return Optional.of(candidates.get(0));
         }
-        if (candidates.size() == 0) {
-            return Optional.empty();
-        }
-        // use heading match as a heuristic
-        Double heading = datapoint.getHeading();
-        return candidates.stream()
-                .filter(candidate -> heading == null || candidate.headingMatches(heading))
-                .findFirst();
+        return Optional.empty();
     }
 
     private record Candidate(RoutePoint routePoint, double distance) {}

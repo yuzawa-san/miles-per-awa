@@ -17,4 +17,5 @@ public final class Datapoint {
     private final LatLng coords;
     private final Double heading;
     private final Double velocity;
+    private final String user;
 }
