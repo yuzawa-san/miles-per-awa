@@ -8,22 +8,15 @@ public record LatLng(double latitude, double longitude) {
 
     static double EARTH_RADIUS = 6371000;
 
-    // https://stackoverflow.com/questions/3694380/calculating-distance-between-two-points-using-latitude-longitude
+    // https://github.com/Leaflet/Leaflet/blob/3b62c7ec96242ee4040cf438a8101a48f8da316d/src/geo/crs/CRS.Earth.js#L24C3-L31C20
     static double distance(LatLng src, LatLng dst) {
-        double lat1 = src.latitude;
-        double lon1 = src.longitude;
-        double lat2 = dst.latitude;
-        double lon2 = dst.longitude;
-
-        double latDistance = Math.toRadians(lat2 - lat1);
-        double lonDistance = Math.toRadians(lon2 - lon1);
-        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
-                + Math.cos(Math.toRadians(lat1))
-                        * Math.cos(Math.toRadians(lat2))
-                        * Math.sin(lonDistance / 2)
-                        * Math.sin(lonDistance / 2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return EARTH_RADIUS * c;
+        double lat1 = Math.toRadians(src.latitude);
+    		    double lat2 = Math.toRadians(dst.latitude);
+    		    double sinDLat = Math.sin(Math.toRadians(dst.latitude - src.latitude) / 2);
+    		    double sinDLon = Math.sin(Math.toRadians(dst.longitude - src.longitude) / 2);
+    		    double a = sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon;
+    		    double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    		return EARTH_RADIUS * c;
     }
 
     public double distance(LatLng dst) {
