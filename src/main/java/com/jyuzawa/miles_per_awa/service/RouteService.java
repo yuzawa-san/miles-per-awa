@@ -79,7 +79,8 @@ public final class RouteService {
         LatLng coords = datapoint.getCoords();
         List<RoutePoint> candidates = normalPath.stream()
                 .map(routePoint -> new Candidate(routePoint, coords.distance(routePoint.coords())))
-                .filter(candidate -> candidate.distance() < intervalMeters / 2 && candidate.routePoint().headingMatches(datapoint.getHeading()))
+                .filter(candidate -> candidate.distance() < intervalMeters / 2
+                        && candidate.routePoint().headingMatches(datapoint.getHeading()))
                 .sorted(Comparator.comparing(Candidate::distance))
                 .map(Candidate::routePoint)
                 .toList();
