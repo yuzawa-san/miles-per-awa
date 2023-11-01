@@ -8,15 +8,18 @@ import com.jyuzawa.miles_per_awa.entity.CalculatedPosition;
 import com.jyuzawa.miles_per_awa.entity.Datapoint;
 import com.jyuzawa.miles_per_awa.entity.RoutePoint;
 import com.jyuzawa.miles_per_awa.entity.Velocity;
-import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 @Component
 public final class VelocityService {
@@ -61,37 +64,47 @@ public final class VelocityService {
     }
 
     private static Optional<Velocity> update(
-            String u, Datapoint datapoint, Optional<RoutePoint> routePoint, Optional<Velocity> old) {
+            String uw, Datapoint datapoint, Optional<RoutePoint> routePoint, Optional<Velocity> old) {
         if (routePoint.isEmpty()) {
             return old;
         }
-        int index = routePoint.get().index();
-        Instant timestamp = datapoint.getTimestamp();
-        double newVelocity = datapoint.getVelocity();
-        double v;
-        Instant oldTimestamp;
-        if (old.isEmpty()) {
-            // this is the first datapoint, use the new information
-            v = newVelocity;
-            oldTimestamp = timestamp;
-            if (newVelocity < MIN_VELOCITY) {
-                // do not create if datapoint is too slow
-                return Optional.empty();
+        if (datapoint.getVelocity() < MIN_VELOCITY) {
+            if (old.isEmpty()) {
+                return old;
             }
-        } else {
-            Velocity theOld = old.get();
-            v = theOld.velocity();
-            oldTimestamp = theOld.timestamp();
-            if (newVelocity < MIN_VELOCITY) {
-                return Optional.of(new Velocity(timestamp, index, 0, v));
+            return Optional.of(new Velocity(
+                    datapoint.getTimestamp(),
+                    routePoint.get().index(),
+                    old.get().history(),
+                    old.get().velocity()));
+        }
+        // TODO: presize
+        List<Tuple2<Datapoint, RoutePoint>> history = new ArrayList<>();
+        if (old.isPresent()) {
+            history.addAll(old.get().history());
+        }
+        history.add(Tuples.of(datapoint, routePoint.get()));
+        List<Tuple2<Datapoint, RoutePoint>> filtered = new ArrayList<>();
+        for (Tuple2<Datapoint, RoutePoint> item : history) {
+            long indexDelta = datapoint.getTimestamp().getEpochSecond()
+                    - item.getT1().getTimestamp().getEpochSecond();
+            if (indexDelta >= 0 && indexDelta < 900) {
+                filtered.add(item);
             }
         }
-        long oldTimebucket = oldTimestamp.getEpochSecond() / TIMEBUCKET_SECONDS;
-        long newTimebucket = timestamp.getEpochSecond() / TIMEBUCKET_SECONDS;
-        for (long t = oldTimebucket; t < newTimebucket; t++) {
-            // exponentially weighted moving average
-            v = newVelocity * ALPHA + v * (1 - ALPHA);
+        if (filtered.size() < 2) {
+            return Optional.of(
+                    new Velocity(datapoint.getTimestamp(), routePoint.get().index(), history, 0));
         }
-        return Optional.of(new Velocity(timestamp, index, newVelocity, v));
+        Tuple2<Datapoint, RoutePoint> first = filtered.get(0);
+        long deltaT = (datapoint.getTimestamp().getEpochSecond()
+                - first.getT1().getTimestamp().getEpochSecond());
+        if (deltaT == 0) {
+            return Optional.of(
+                    new Velocity(datapoint.getTimestamp(), routePoint.get().index(), history, 0));
+        }
+        double v = (routePoint.get().index() - first.getT2().index()) * 30.0 / deltaT;
+        return Optional.of(
+                new Velocity(datapoint.getTimestamp(), routePoint.get().index(), history, v));
     }
 }
