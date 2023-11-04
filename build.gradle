@@ -3,8 +3,8 @@ plugins {
 	id "com.diffplug.spotless" version "6.22.0"
 	id "com.github.jakemarsden.git-hooks" version "0.0.2"
 	id 'com.github.jk1.dependency-license-report' version '2.5'
-	id "io.freefair.lombok" version "8.3"
-	id 'org.springframework.boot' version '3.1.4'
+	id "io.freefair.lombok" version "8.4"
+	id 'org.springframework.boot' version '3.1.5'
 }
 
 apply plugin: "java"
@@ -72,9 +72,9 @@ spotless {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
-	implementation 'org.webjars:webjars-locator-core:0.48'
+	implementation 'org.webjars:webjars-locator-core:0.54'
 	implementation 'org.webjars.npm:leaflet:1.9.4'
-	testImplementation 'org.mockito:mockito-core:5.5.0'
+	testImplementation 'org.mockito:mockito-core:5.6.0'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.3'
 	testImplementation 'org.junit.platform:junit-platform-suite:1.10.0'
