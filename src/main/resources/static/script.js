@@ -24,7 +24,8 @@ fetch("./route")
 			attributionControl: false
 		});
 		L.control.attribution({
-			position: 'topright'
+			position: 'topright',
+			prefix: `<a href="https://leafletjs.com" title="A JavaScript library for interactive maps">Leaflet</a>`
 		}).addTo(map);
 		L.control.scale({
 			position: 'topleft'
@@ -124,6 +125,9 @@ fetch("./route")
 		const labelDistance = metric ? 1000 : 1609;
 
 		function formatDistance(dist) {
+			if (dist < 0) {
+				return "start";
+			}
 			return (dist / labelDistance).toFixed(1);
 		}
 		const maxDist = normalPath.length * intervalMeters;
@@ -251,7 +255,7 @@ fetch("./route")
 					userState.v = point.velocity;
 					const baseOffset = point.index * intervalMeters;
 					userState.estimatedOffset = Math.min(maxDist, baseOffset + (nowMs - point.indexTimestampMs) / 1000 * point.velocity);
-					userState.currentOffset = Math.min(maxDist, baseOffset + (point.timestampMs - point.indexTimestampMs) / 1000 * point.velocity);
+					userState.currentOffset = Math.max(0, Math.min(maxDist, baseOffset + (point.timestampMs - point.indexTimestampMs) / 1000 * point.velocity));
 				} else {
 					userState.v = 0;
 					userState.estimatedOffset = 0;
@@ -305,7 +309,8 @@ fetch("./route")
 					const dt = new Date(nowMs + deltaT * 1000);
 					const etaMinutes = Math.floor(deltaT / 60);
 					const etaSeconds = padZero(Math.round(deltaT % 60));
-					out += `<td>${etaMinutes}&#8242;${etaSeconds}&#8243;</td><td>${padZero(dt.getHours())}:${padZero(dt.getMinutes())}</td>`;
+					const hours = dt.getHours();
+					out += `<td>${etaMinutes}&#8242;${etaSeconds}&#8243;</td><td>${padZero(dt.getHours() % 12)}:${padZero(dt.getMinutes())}${hours < 12 ? 'am' : 'pm'}</td>`;
 				});
 				out += '</tr>';
 			}

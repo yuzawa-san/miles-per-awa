@@ -4,11 +4,9 @@
  */
 package com.jyuzawa.miles_per_awa.entity;
 
-import jakarta.annotation.Nullable;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import java.time.Instant;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,18 +22,13 @@ public class CalculatedPosition {
     @Id
     private String id;
 
-    private Instant positionTimestamp;
+    private long positionTimestampSeconds;
     private double latitude;
     private double longitude;
-
-    @Nullable
-    private Instant timestamp;
-
-    @Nullable
-    private Integer index;
-
-    @Nullable
-    private Double velocity;
+    private long timestampSeconds;
+    private int index;
+    private double velocity;
+    private boolean hasVelocity;
 
     @Convert(converter = HistoryConverter.class)
     private List<RouteTuple> history;

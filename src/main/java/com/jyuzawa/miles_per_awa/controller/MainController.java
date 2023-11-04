@@ -36,8 +36,6 @@ public class MainController {
                 .cacheControl(CacheControl.maxAge(6, TimeUnit.HOURS))
                 .lastModified(routePointsService.getLastModified())
                 .body(RouteResponse.builder()
-                        .name(routeService.getName())
-                        .imperialUnits(routeService.isImperialUnits())
                         .intervalMeters(RouteService.INTERVAL_METERS)
                         .rawPath(routeService.getRawPath())
                         .build());
@@ -52,14 +50,11 @@ public class MainController {
                             .name(entry.getKey())
                             .lat(calculatedPosition.getLatitude())
                             .lon(calculatedPosition.getLongitude())
-                            .timestampMs(
-                                    calculatedPosition.getPositionTimestamp().toEpochMilli());
-                    Double velocity = calculatedPosition.getVelocity();
-                    if (velocity != null) {
+                            .timestampMs(calculatedPosition.getPositionTimestampSeconds() * 1000L);
+                    if (calculatedPosition.isHasVelocity()) {
                         person.index(calculatedPosition.getIndex())
-                                .indexTimestampMs(
-                                        calculatedPosition.getTimestamp().toEpochMilli())
-                                .velocity(velocity);
+                                .indexTimestampMs(calculatedPosition.getTimestampSeconds() * 1000L)
+                                .velocity(calculatedPosition.getVelocity());
                     }
                     return person.build();
                 })

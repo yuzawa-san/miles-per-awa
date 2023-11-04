@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 James Yuzawa (https://www.jyuzawa.com/)
+ * Copyright (c) 2022-2023 James Yuzawa (https://www.jyuzawa.com/)
  * All rights reserved. Licensed under the MIT License.
  */
 package com.jyuzawa.miles_per_awa.dto;
@@ -14,8 +14,6 @@ import lombok.extern.jackson.Jacksonized;
 @Builder
 @Value
 public final class RouteResponse {
-    private final String name;
-    private final boolean imperialUnits;
     private final int intervalMeters;
     private final List<BigDecimal> rawPath;
 }

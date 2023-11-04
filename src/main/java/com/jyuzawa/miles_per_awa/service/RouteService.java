@@ -14,38 +14,26 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import lombok.AccessLevel;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-@Getter
 @Component
 public final class RouteService {
     public static final int INTERVAL_METERS = 30;
     private static final double INTERVAL_METERS_HALF = INTERVAL_METERS / 2d;
 
-    @Getter(AccessLevel.NONE)
     private final List<RoutePoint> normalPath;
 
-    private final String name;
-
-    private final boolean imperialUnits;
-
+    @Getter
     private final List<BigDecimal> rawPath;
 
     @Autowired
-    public RouteService(
-            @Value("${route.name}") String name,
-            @Value("${route.imperialUnits:false}") boolean imperialUnits,
-            RoutePointsService routePointsService) {
-        this(name, imperialUnits, routePointsService.getPoints());
+    public RouteService(RoutePointsService routePointsService) {
+        this(routePointsService.getPoints());
     }
 
-    RouteService(String name, boolean imperialUnits, List<LatLng> points) {
-        this.name = name;
-        this.imperialUnits = imperialUnits;
+    RouteService(List<LatLng> points) {
         double dist = 0;
         double[] deltas = new double[points.size()];
         List<BigDecimal> rawPath = new ArrayList<>(points.size() * 2);
