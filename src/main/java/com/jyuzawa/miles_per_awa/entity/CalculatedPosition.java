@@ -4,6 +4,11 @@
  */
 package com.jyuzawa.miles_per_awa.entity;
 
-import java.util.Optional;
+import java.time.Instant;
+import java.util.List;
+import java.util.OptionalDouble;
+import lombok.Builder;
 
-public record CalculatedPosition(Datapoint position, Optional<Velocity> velocity) {}
+@Builder(toBuilder = true)
+public record CalculatedPosition(
+        Datapoint position, List<RouteTuple> history, Instant timestamp, int index, OptionalDouble velocity) {}

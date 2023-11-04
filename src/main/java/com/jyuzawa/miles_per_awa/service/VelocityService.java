@@ -5,9 +5,11 @@
 package com.jyuzawa.miles_per_awa.service;
 
 import com.jyuzawa.miles_per_awa.entity.CalculatedPosition;
+import com.jyuzawa.miles_per_awa.entity.CalculatedPosition.CalculatedPositionBuilder;
 import com.jyuzawa.miles_per_awa.entity.Datapoint;
 import com.jyuzawa.miles_per_awa.entity.RoutePoint;
-import com.jyuzawa.miles_per_awa.entity.Velocity;
+import com.jyuzawa.miles_per_awa.entity.RouteTuple;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -15,17 +17,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
 
 @Component
 public final class VelocityService {
-    // empirically determined for biking and running
-    private static final long TIMEBUCKET_SECONDS = 30;
-    private static final double ALPHA = 0.1;
+    private static final long LOOKBACK_SECONDS = 900;
     // from 4mph avg walking speed
     private static final double MIN_VELOCITY = 1.78816;
 
@@ -52,59 +51,41 @@ public final class VelocityService {
     }
 
     public CalculatedPosition calculate(String user, Datapoint datapoint, Optional<RoutePoint> routePoint) {
-        return users.compute(
-                user,
-                (u, old) -> new CalculatedPosition(
-                        datapoint,
-                        update(
-                                u,
-                                datapoint,
-                                routePoint,
-                                Optional.ofNullable(old).flatMap(CalculatedPosition::velocity))));
+        return users.compute(user, (u, old) -> process(datapoint, routePoint, old));
     }
 
-    private static Optional<Velocity> update(
-            String uw, Datapoint datapoint, Optional<RoutePoint> routePoint, Optional<Velocity> old) {
+    private static CalculatedPosition process(
+            Datapoint datapoint, Optional<RoutePoint> routePoint, CalculatedPosition old) {
+        if (old == null) {
+            old = new CalculatedPosition(datapoint, List.of(), Instant.EPOCH, -1, OptionalDouble.empty());
+        }
+        CalculatedPositionBuilder builder = old.toBuilder().position(datapoint);
         if (routePoint.isEmpty()) {
-            return old;
+            return builder.build();
         }
-        if (datapoint.getVelocity() < MIN_VELOCITY) {
-            if (old.isEmpty()) {
-                return old;
-            }
-            return Optional.of(new Velocity(
-                    datapoint.getTimestamp(),
-                    routePoint.get().index(),
-                    old.get().history(),
-                    old.get().velocity()));
-        }
-        // TODO: presize
-        List<Tuple2<Datapoint, RoutePoint>> history = new ArrayList<>();
-        if (old.isPresent()) {
-            history.addAll(old.get().history());
-        }
-        history.add(Tuples.of(datapoint, routePoint.get()));
-        List<Tuple2<Datapoint, RoutePoint>> filtered = new ArrayList<>();
-        for (Tuple2<Datapoint, RoutePoint> item : history) {
-            long indexDelta = datapoint.getTimestamp().getEpochSecond()
-                    - item.getT1().getTimestamp().getEpochSecond();
-            if (indexDelta >= 0 && indexDelta < 900) {
-                filtered.add(item);
+        long timestampSeconds = datapoint.getTimestamp().getEpochSecond();
+        RoutePoint theRoutePoint = routePoint.get();
+        int index = theRoutePoint.index();
+        List<RouteTuple> oldHistory = old.history();
+        List<RouteTuple> history = new ArrayList<>(oldHistory.size() + 1);
+        for (RouteTuple item : oldHistory) {
+            long indexDelta = timestampSeconds - item.timestampSeconds();
+            if (indexDelta >= 0 && indexDelta < LOOKBACK_SECONDS) {
+                history.add(item);
             }
         }
-        if (filtered.size() < 2) {
-            return Optional.of(
-                    new Velocity(datapoint.getTimestamp(), routePoint.get().index(), history, 0));
+        history.add(new RouteTuple(timestampSeconds, index));
+        builder.timestamp(datapoint.getTimestamp()).index(index).history(history);
+        if (datapoint.getVelocity() < MIN_VELOCITY || history.size() < 2) {
+            return builder.build();
         }
-        Tuple2<Datapoint, RoutePoint> first = filtered.get(0);
-        long deltaT = (datapoint.getTimestamp().getEpochSecond()
-                - first.getT1().getTimestamp().getEpochSecond());
-        if (deltaT == 0) {
-            return Optional.of(
-                    new Velocity(datapoint.getTimestamp(), routePoint.get().index(), history, 0));
+        RouteTuple first = history.get(0);
+        int deltaD = index - first.index();
+        long deltaT = timestampSeconds - first.timestampSeconds();
+        if (deltaD == 0 || deltaT == 0) {
+            return builder.build();
         }
-        double v = (routePoint.get().index() - first.getT2().index()) * 30.0 / deltaT;
-        return Optional.of(
-                new Velocity(datapoint.getTimestamp(), routePoint.get().index(), history, v));
+        double v = deltaD * RouteService.INTERVAL_METERS / (double) deltaT;
+        return builder.velocity(OptionalDouble.of(v)).build();
     }
 }

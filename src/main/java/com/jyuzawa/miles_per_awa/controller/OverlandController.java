@@ -13,6 +13,7 @@ import com.jyuzawa.miles_per_awa.entity.CalculatedPosition;
 import com.jyuzawa.miles_per_awa.entity.Datapoint;
 import com.jyuzawa.miles_per_awa.entity.LatLng;
 import com.jyuzawa.miles_per_awa.service.IngestService;
+import com.jyuzawa.miles_per_awa.service.RouteService;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -33,8 +34,6 @@ public class OverlandController {
     private final ObjectMapper jacksonObjectMapper;
 
     private final IngestService ingestService;
-
-    private final int intervalMeters = 30;
 
     @PostMapping("/overland")
     public SuccessResponse overland(@RequestBody JsonNode in) {
@@ -68,13 +67,12 @@ public class OverlandController {
         while (i < n) {
             OverlandLocation start = locations.get(i);
             LatLng startCoords = start.getGeometry().getLatLng();
-            // System.out.println("["+startCoords.longitude() + ","+startCoords.latitude()+"],");
             int j = i + 1;
             while (j < n) {
                 OverlandLocation candidate = locations.get(j);
                 LatLng candidateCoords = candidate.getGeometry().getLatLng();
                 double d = startCoords.distance(candidateCoords);
-                if (d > intervalMeters) {
+                if (d > RouteService.INTERVAL_METERS) {
                     i = j;
                     Instant timestamp = candidate.getProperties().getTimestamp();
                     Datapoint datapoint = Datapoint.builder()

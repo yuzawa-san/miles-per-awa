@@ -23,6 +23,9 @@ import org.springframework.stereotype.Component;
 @Getter
 @Component
 public final class RouteService {
+    public static final int INTERVAL_METERS = 30;
+    private static final double INTERVAL_METERS_HALF = INTERVAL_METERS / 2d;
+
     @Getter(AccessLevel.NONE)
     private final List<RoutePoint> normalPath;
 
@@ -30,23 +33,19 @@ public final class RouteService {
 
     private final boolean imperialUnits;
 
-    private final int intervalMeters;
-
     private final List<BigDecimal> rawPath;
 
     @Autowired
     public RouteService(
             @Value("${route.name}") String name,
             @Value("${route.imperialUnits:false}") boolean imperialUnits,
-            @Value("${route.intervalMeters:30}") int intervalMeters,
             RoutePointsService routePointsService) {
-        this(name, imperialUnits, intervalMeters, routePointsService.getPoints());
+        this(name, imperialUnits, routePointsService.getPoints());
     }
 
-    RouteService(String name, boolean imperialUnits, int intervalMeters, List<LatLng> points) {
+    RouteService(String name, boolean imperialUnits, List<LatLng> points) {
         this.name = name;
         this.imperialUnits = imperialUnits;
-        this.intervalMeters = intervalMeters;
         double dist = 0;
         double[] deltas = new double[points.size()];
         List<BigDecimal> rawPath = new ArrayList<>(points.size() * 2);
@@ -69,7 +68,7 @@ public final class RouteService {
             rawPath.add(new BigDecimal(loc.latitude()).setScale(5, RoundingMode.DOWN));
             rawPath.add(new BigDecimal(loc.longitude()).setScale(5, RoundingMode.DOWN));
             i++;
-            offset = i * intervalMeters;
+            offset = i * INTERVAL_METERS;
         }
         this.normalPath = Collections.unmodifiableList(normalPath);
         this.rawPath = Collections.unmodifiableList(rawPath);
@@ -79,7 +78,7 @@ public final class RouteService {
         LatLng coords = datapoint.getCoords();
         List<RoutePoint> candidates = normalPath.stream()
                 .map(routePoint -> new Candidate(routePoint, coords.distance(routePoint.coords())))
-                .filter(candidate -> candidate.distance() < intervalMeters / 2
+                .filter(candidate -> candidate.distance() < INTERVAL_METERS_HALF
                         && candidate.routePoint().headingMatches(datapoint.getHeading()))
                 .sorted(Comparator.comparing(Candidate::distance))
                 .map(Candidate::routePoint)

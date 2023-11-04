@@ -13,7 +13,6 @@ import com.jyuzawa.miles_per_awa.entity.CalculatedPosition;
 import com.jyuzawa.miles_per_awa.entity.Datapoint;
 import com.jyuzawa.miles_per_awa.entity.LatLng;
 import com.jyuzawa.miles_per_awa.entity.RoutePoint;
-import com.jyuzawa.miles_per_awa.entity.Velocity;
 import com.jyuzawa.miles_per_awa.service.IngestService;
 import com.jyuzawa.miles_per_awa.service.RoutePointsService;
 import com.jyuzawa.miles_per_awa.service.RouteService;
@@ -21,22 +20,20 @@ import com.jyuzawa.miles_per_awa.service.VelocityService;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalDouble;
 
 public class VelocityTest {
 
     public static void main(String[] args) throws Exception {
         RoutePointsService routePoints = new RoutePointsService("/Users/jtyuzawa/Documents/chicago.csv");
-        RouteService routeService = new RouteService("", false, 30, routePoints);
+        RouteService routeService = new RouteService("", false, routePoints);
         VelocityService velocityService = new VelocityService();
         IngestService ingest = new IngestService(routeService, velocityService);
-        Instant min = Instant.parse("2023-10-08T12:43:32Z");
-        Instant max = Instant.parse("2023-10-08T16:06:57Z");
         double alpha = 0.2;
         String sep = ": data: ";
         ObjectMapper objectMapper = new ObjectMapper();
@@ -86,7 +83,7 @@ public class VelocityTest {
                     detectedPoint.properties.put(
                             "timestamp", String.valueOf(point.getTimestamp().getEpochSecond()));
                     detectedPoint.properties.put(
-                            "offset", String.valueOf(closest.get().index() * 30));
+                            "offset", String.valueOf(closest.get().index() * RouteService.INTERVAL_METERS));
                     detectedPoint.properties.put("v", String.valueOf(26.8224 / point.getVelocity()));
 
                     var detectedPointGeometry = new PointGeometry();
@@ -102,7 +99,7 @@ public class VelocityTest {
                     // sb.append(point.getTimestamp().toString().replace("T"," ").replace("Z", "")+"\t"+(-26.8224/v)
                     // +"\t"+(-26.8224/vavg) + "\n");
                     CalculatedPosition n = velocityService.calculate("dning", point, closest);
-                    Optional<Velocity> lastV = n.velocity();
+                    OptionalDouble lastV = n.velocity();
                     if (lastV.isEmpty()) {
                         continue;
                     }
@@ -113,7 +110,7 @@ public class VelocityTest {
 
                     // sb.append(n.position().get)
 
-                    double vv = n.velocity().get().velocity();
+                    double vv = n.velocity().getAsDouble();
                     v = v * (1 - alpha) + vv * alpha;
                     sum += point.getVelocity();
                     count++;
@@ -130,7 +127,7 @@ public class VelocityTest {
         System.out.println(sb.toString());
 
         // https://geojson.io/
-        objectMapper.writerWithDefaultPrettyPrinter().writeValue(new File("geo.json"), featureCollection);
+        objectMapper.writerWithDefaultPrettyPrinter().writeValue(new File("build/geo.json"), featureCollection);
     }
 
     static class FeatureCollection {

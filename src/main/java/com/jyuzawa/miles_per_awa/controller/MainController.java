@@ -40,7 +40,7 @@ public class MainController {
                 .body(RouteResponse.builder()
                         .name(routeService.getName())
                         .imperialUnits(routeService.isImperialUnits())
-                        .intervalMeters(routeService.getIntervalMeters())
+                        .intervalMeters(RouteService.INTERVAL_METERS)
                         .rawPath(routeService.getRawPath())
                         .build());
     }
@@ -58,9 +58,9 @@ public class MainController {
                             .lon(coords.longitude())
                             .timestampMs(position.getTimestamp().toEpochMilli());
                     calculatedPosition.velocity().ifPresent(velocity -> {
-                        person.index(velocity.index())
-                                .indexTimestampMs(velocity.timestamp().toEpochMilli())
-                                .velocity(velocity.velocity());
+                        person.index(calculatedPosition.index())
+                                .indexTimestampMs(calculatedPosition.timestamp().toEpochMilli())
+                                .velocity(velocity);
                     });
                     return person.build();
                 })
