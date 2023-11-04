@@ -16,6 +16,7 @@ import com.jyuzawa.miles_per_awa.entity.RoutePoint;
 import com.jyuzawa.miles_per_awa.service.IngestService;
 import com.jyuzawa.miles_per_awa.service.RoutePointsService;
 import com.jyuzawa.miles_per_awa.service.RouteService;
+import com.jyuzawa.miles_per_awa.service.VelocityRepository;
 import com.jyuzawa.miles_per_awa.service.VelocityService;
 import java.io.File;
 import java.nio.file.Files;
@@ -25,14 +26,92 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.OptionalDouble;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Backtesting {
 
     public static void main(String[] args) throws Exception {
         RoutePointsService routePoints = new RoutePointsService("/Users/jtyuzawa/Documents/chicago.csv");
         RouteService routeService = new RouteService("", false, routePoints);
-        VelocityService velocityService = new VelocityService();
+        Map<String, CalculatedPosition> db = new ConcurrentHashMap<String, CalculatedPosition>();
+        VelocityService velocityService = new VelocityService(new VelocityRepository() {
+
+            @Override
+            public <S extends CalculatedPosition> Iterable<S> saveAll(Iterable<S> entities) {
+                // TODO Auto-generated method stub
+                return null;
+            }
+
+            @Override
+            public <S extends CalculatedPosition> S save(S entity) {
+                db.put(entity.getId(), entity);
+                return entity;
+            }
+
+            @Override
+            public Optional<CalculatedPosition> findById(String id) {
+                return Optional.ofNullable(db.get(id));
+            }
+
+            @Override
+            public Iterable<CalculatedPosition> findAllById(Iterable<String> ids) {
+                List<CalculatedPosition> out = new ArrayList<>();
+                for (String id : ids) {
+                    CalculatedPosition item = db.get(id);
+                    if (item != null) {
+                        out.add(item);
+                    }
+                }
+                return out;
+            }
+
+            @Override
+            public Iterable<CalculatedPosition> findAll() {
+                return db.values();
+            }
+
+            @Override
+            public boolean existsById(String id) {
+                // TODO Auto-generated method stub
+                return false;
+            }
+
+            @Override
+            public void deleteById(String id) {
+                // TODO Auto-generated method stub
+
+            }
+
+            @Override
+            public void deleteAllById(Iterable<? extends String> ids) {
+                // TODO Auto-generated method stub
+
+            }
+
+            @Override
+            public void deleteAll(Iterable<? extends CalculatedPosition> entities) {
+                // TODO Auto-generated method stub
+
+            }
+
+            @Override
+            public void deleteAll() {
+                // TODO Auto-generated method stub
+
+            }
+
+            @Override
+            public void delete(CalculatedPosition entity) {
+                // TODO Auto-generated method stub
+
+            }
+
+            @Override
+            public long count() {
+                // TODO Auto-generated method stub
+                return 0;
+            }
+        });
         IngestService ingest = new IngestService(routeService, velocityService);
         String sep = ": data: ";
         ObjectMapper objectMapper = new ObjectMapper();
@@ -89,18 +168,16 @@ public class Backtesting {
                     featureCollection.features.add(detectedPoint);
 
                     CalculatedPosition n = velocityService.calculate(point, closest);
-                    OptionalDouble lastV = n.velocity();
-                    if (lastV.isEmpty()) {
+                    Double lastV = n.getVelocity();
+                    if (lastV == null) {
                         continue;
                     }
 
-                    double v = n.velocity().getAsDouble();
-                    sb.append(n.position()
-                                    .getTimestamp()
+                    sb.append(n.getPositionTimestamp()
                                     .toString()
                                     .replace("T", " ")
                                     .replace("Z", "") + "\t"
-                            + (-26.8224 / n.position().getVelocity()) + "\t" + (-26.8224 / v) + "\n");
+                            + (-26.8224 / point.getVelocity()) + "\t" + (-26.8224 / lastV) + "\n");
                 }
             }
         }

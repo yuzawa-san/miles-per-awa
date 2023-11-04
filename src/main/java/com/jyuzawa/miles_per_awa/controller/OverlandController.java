@@ -40,8 +40,9 @@ public class OverlandController {
         log.info("data: " + in);
         OverlandRequest r = jacksonObjectMapper.convertValue(in, OverlandRequest.class);
         for (Datapoint point : convert(r)) {
-            CalculatedPosition out = ingestService.ingest(point.getUser(), point);
-            log.info("POS " + out);
+            log.info(point.toString());
+            CalculatedPosition out = ingestService.ingest(point);
+            log.info(out.toString());
         }
         return SuccessResponse.builder().result("ok").build();
     }

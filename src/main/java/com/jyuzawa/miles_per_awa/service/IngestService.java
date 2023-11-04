@@ -18,8 +18,8 @@ public class IngestService {
     private final RouteService routePointService;
     private final VelocityService velocityService;
 
-    public CalculatedPosition ingest(String user, Datapoint datapoint) {
+    public CalculatedPosition ingest(Datapoint datapoint) {
         Optional<RoutePoint> closest = routePointService.getClosest(datapoint);
-        return velocityService.calculate(user, datapoint, closest);
+        return velocityService.calculate(datapoint, closest);
     }
 }
