@@ -1,7 +1,7 @@
 spring:
   application:
     name: miles-per-awa
-spring.web.resources.cache.cachecontrol.max-age: 6h
+spring.web.resources.cache.cachecontrol.max-age: 1h
 server:
   compression:
     enabled: true

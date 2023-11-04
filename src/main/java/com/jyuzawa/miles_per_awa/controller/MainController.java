@@ -33,7 +33,7 @@ public class MainController {
     @GetMapping("/route")
     public ResponseEntity<RouteResponse> route() {
         return ResponseEntity.ok()
-                .cacheControl(CacheControl.maxAge(6, TimeUnit.HOURS))
+                .cacheControl(CacheControl.maxAge(1, TimeUnit.HOURS))
                 .lastModified(routePointsService.getLastModified())
                 .body(RouteResponse.builder()
                         .intervalMeters(RouteService.INTERVAL_METERS)
