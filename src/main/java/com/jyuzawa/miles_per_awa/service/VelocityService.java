@@ -50,8 +50,8 @@ public final class VelocityService {
         return out;
     }
 
-    public CalculatedPosition calculate(String user, Datapoint datapoint, Optional<RoutePoint> routePoint) {
-        return users.compute(user, (u, old) -> process(datapoint, routePoint, old));
+    public CalculatedPosition calculate(Datapoint datapoint, Optional<RoutePoint> routePoint) {
+        return users.compute(datapoint.getUser(), (u, old) -> process(datapoint, routePoint, old));
     }
 
     private static CalculatedPosition process(

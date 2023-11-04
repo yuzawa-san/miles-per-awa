@@ -88,7 +88,7 @@ public class Backtesting {
                     detectedPoint.geometry = detectedPointGeometry;
                     featureCollection.features.add(detectedPoint);
 
-                    CalculatedPosition n = velocityService.calculate("dning", point, closest);
+                    CalculatedPosition n = velocityService.calculate(point, closest);
                     OptionalDouble lastV = n.velocity();
                     if (lastV.isEmpty()) {
                         continue;
