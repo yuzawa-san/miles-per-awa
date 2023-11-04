@@ -27,14 +27,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalDouble;
 
-public class VelocityTest {
+public class Backtesting {
 
     public static void main(String[] args) throws Exception {
         RoutePointsService routePoints = new RoutePointsService("/Users/jtyuzawa/Documents/chicago.csv");
         RouteService routeService = new RouteService("", false, routePoints);
         VelocityService velocityService = new VelocityService();
         IngestService ingest = new IngestService(routeService, velocityService);
-        double alpha = 0.2;
         String sep = ": data: ";
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
@@ -61,10 +60,7 @@ public class VelocityTest {
 
         OverlandController overlandController = new OverlandController(objectMapper, ingest);
         List<String> lines = Files.readAllLines(Path.of("/Users/jtyuzawa/Documents/chicago_marathon.log"));
-        StringBuilder sb = new StringBuilder();
-        double v = 3.6;
-        double sum = 0;
-        int count = 0;
+        StringBuilder sb = new StringBuilder("ts\tv\tv_avg\n");
         for (String line : lines) {
             String[] pieces = line.split(sep);
             if (pieces.length != 2) {
@@ -92,29 +88,13 @@ public class VelocityTest {
                     detectedPoint.geometry = detectedPointGeometry;
                     featureCollection.features.add(detectedPoint);
 
-                    // sb.append("["+point.getCoords().longitude() + ","+point.getCoords().latitude()+"],");
-
-                    // sb.append(point.getTimestamp() + "\t"+(-26.8224/point.getVelocity())+"\t"+(-26.8224/vavg)+"\n");
-
-                    // sb.append(point.getTimestamp().toString().replace("T"," ").replace("Z", "")+"\t"+(-26.8224/v)
-                    // +"\t"+(-26.8224/vavg) + "\n");
                     CalculatedPosition n = velocityService.calculate("dning", point, closest);
                     OptionalDouble lastV = n.velocity();
                     if (lastV.isEmpty()) {
                         continue;
                     }
-                    //						if(Math.abs(n.position().getVelocity() - v.lastVelocity())< 0.0001) {
-                    //							sb.append("["+n.position().getCoords().longitude() +
-                    // ","+n.position().getCoords().latitude()+"],");
-                    //						}
 
-                    // sb.append(n.position().get)
-
-                    double vv = n.velocity().getAsDouble();
-                    v = v * (1 - alpha) + vv * alpha;
-                    sum += point.getVelocity();
-                    count++;
-                    v = vv;
+                    double v = n.velocity().getAsDouble();
                     sb.append(n.position()
                                     .getTimestamp()
                                     .toString()
@@ -124,7 +104,7 @@ public class VelocityTest {
                 }
             }
         }
-        System.out.println(sb.toString());
+        Files.writeString(Path.of("build/out.tsv"), sb.toString());
 
         // https://geojson.io/
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(new File("build/geo.json"), featureCollection);
