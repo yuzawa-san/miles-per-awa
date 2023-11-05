@@ -34,7 +34,7 @@ public class MainController {
     public ResponseEntity<RouteResponse> route() {
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.maxAge(1, TimeUnit.HOURS))
-                .lastModified(routePointsService.getLastModified())
+                .eTag(routePointsService.getETag())
                 .body(RouteResponse.builder()
                         .intervalMeters(RouteService.INTERVAL_METERS)
                         .rawPath(routeService.getRawPath())

@@ -5,12 +5,10 @@
 package com.jyuzawa.miles_per_awa.service;
 
 import com.jyuzawa.miles_per_awa.entity.LatLng;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.time.Instant;
+import java.nio.ByteBuffer;
+import java.nio.DoubleBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -23,27 +21,32 @@ import org.springframework.stereotype.Component;
 @Component
 public class RoutePointsService {
 
-    @Getter
     private final List<LatLng> points;
-
-    private final Instant lastModified;
+    private final String eTag;
 
     @Autowired
-    public RoutePointsService(@Value("${route.path}") String rawPath) throws IOException {
-        Path file = Paths.get(rawPath);
-        List<String> lines = Files.readAllLines(file);
+    public RoutePointsService(@Value("${route.path}") String rawData) throws NoSuchAlgorithmException {
         List<LatLng> points = new ArrayList<>();
-        boolean header = true;
-        for (String line : lines) {
-            if (header) {
-                header = false;
+        for (String line : rawData.split("\n")) {
+            if (line.isEmpty()) {
                 continue;
             }
             String[] pieces = line.split(",");
             points.add(new LatLng(Double.parseDouble(pieces[0]), Double.parseDouble(pieces[1])));
         }
-        BasicFileAttributes attr = Files.readAttributes(file, BasicFileAttributes.class);
-        this.lastModified = attr.lastModifiedTime().toInstant();
+        byte[] buffer = new byte[points.size() * 16];
+        DoubleBuffer doubleBuffer = ByteBuffer.wrap(buffer).asDoubleBuffer();
+        for (LatLng point : points) {
+            doubleBuffer.put(point.latitude());
+            doubleBuffer.put(point.longitude());
+        }
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] hash = digest.digest(buffer);
+        StringBuilder result = new StringBuilder();
+        for (byte aByte : hash) {
+            result.append(String.format("%02x", aByte));
+        }
+        this.eTag = result.toString();
         this.points = Collections.unmodifiableList(points);
     }
 }

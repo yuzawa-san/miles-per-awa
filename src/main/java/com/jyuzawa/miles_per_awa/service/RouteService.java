@@ -35,10 +35,11 @@ public final class RouteService {
 
     RouteService(List<LatLng> points) {
         double dist = 0;
-        double[] deltas = new double[points.size()];
-        List<BigDecimal> rawPath = new ArrayList<>(points.size() * 2);
+        int numPoints = points.size();
+        double[] deltas = new double[numPoints];
+        List<BigDecimal> rawPath = new ArrayList<>(numPoints * 2);
         deltas[0] = 0;
-        for (int i = 1; i < points.size(); i++) {
+        for (int i = 1; i < numPoints; i++) {
             LatLng prev = points.get(i - 1);
             LatLng curr = points.get(i);
             dist += curr.distance(prev);

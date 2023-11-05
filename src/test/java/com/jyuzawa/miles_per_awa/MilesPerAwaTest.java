@@ -41,7 +41,7 @@ public class MilesPerAwaTest {
         @Primary
         public RoutePointsService routePointsService() {
             RoutePointsService mock = Mockito.mock(RoutePointsService.class);
-            Mockito.when(mock.getLastModified()).thenReturn(Instant.now());
+            Mockito.when(mock.getETag()).thenReturn("BLAH");
             Mockito.when(mock.getPoints())
                     .thenReturn(
                             List.of(new LatLng(10d, 10.0d), new LatLng(10.0d, 10.005d), new LatLng(10.00d, 10.000d)));
