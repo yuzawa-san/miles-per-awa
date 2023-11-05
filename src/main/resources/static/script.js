@@ -310,7 +310,11 @@ fetch("./route")
 					const etaMinutes = Math.floor(deltaT / 60);
 					const etaSeconds = padZero(Math.round(deltaT % 60));
 					const hours = dt.getHours();
-					out += `<td>${etaMinutes}&#8242;${etaSeconds}&#8243;</td><td>${padZero(dt.getHours() % 12)}:${padZero(dt.getMinutes())}${hours < 12 ? 'am' : 'pm'}</td>`;
+					let fixedHours = dt.getHours() % 12;
+					if (fixedHours === 0) {
+						fixedHours = 12;
+					}
+					out += `<td>${etaMinutes}&#8242;${etaSeconds}&#8243;</td><td>${padZero(fixedHours)}:${padZero(dt.getMinutes())}${hours < 12 ? 'am' : 'pm'}</td>`;
 				});
 				out += '</tr>';
 			}
