@@ -72,7 +72,7 @@ public class OverlandController {
                 OverlandLocation candidate = locations.get(j);
                 LatLng candidateCoords = candidate.getGeometry().getLatLng();
                 double d = startCoords.distance(candidateCoords);
-                if (d > RouteService.INTERVAL_METERS) {
+                if (d > RouteService.INTERVAL_METERS || j == n - 1) {
                     i = j;
                     Instant timestamp = candidate.getProperties().getTimestamp();
                     Datapoint datapoint = Datapoint.builder()

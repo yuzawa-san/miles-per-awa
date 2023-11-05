@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
 public final class VelocityService {
     private static final long LOOKBACK_SECONDS = 900;
     // from 4mph avg walking speed
-    private static final double MIN_VELOCITY = 1.78816;
+    static final double MIN_VELOCITY = 1.78816;
 
     private final VelocityRepository repository;
     private final MilesPerAwaProps props;

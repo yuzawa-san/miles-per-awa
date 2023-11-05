@@ -64,10 +64,13 @@ public final class RouteService {
 
     public Optional<RoutePoint> getClosest(Datapoint datapoint) {
         LatLng coords = datapoint.getCoords();
+        // this is to make sure when a person is still, the index is updated
+        boolean minVelocity = datapoint.getVelocity() < VelocityService.MIN_VELOCITY;
+        Double heading = datapoint.getHeading();
         List<RoutePoint> candidates = normalPath.stream()
                 .map(routePoint -> new Candidate(routePoint, coords.distance(routePoint.coords())))
                 .filter(candidate -> candidate.distance() < INTERVAL_METERS_HALF
-                        && candidate.routePoint().headingMatches(datapoint.getHeading()))
+                        && (minVelocity || candidate.routePoint().headingMatches(heading)))
                 .sorted(Comparator.comparing(Candidate::distance))
                 .map(Candidate::routePoint)
                 .toList();
