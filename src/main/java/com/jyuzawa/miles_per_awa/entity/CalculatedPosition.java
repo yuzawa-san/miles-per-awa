@@ -4,6 +4,7 @@
  */
 package com.jyuzawa.miles_per_awa.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -30,6 +31,7 @@ public class CalculatedPosition {
     private double velocity;
     private boolean hasVelocity;
 
+    @Column(columnDefinition = "LONGTEXT")
     @Convert(converter = HistoryConverter.class)
     private List<RouteTuple> history;
 }
