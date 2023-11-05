@@ -52,6 +52,7 @@ public final class VelocityService {
                     .index(0)
                     .positionTimestampSeconds(seconds)
                     .timestampSeconds(seconds)
+                    .history(List.of())
                     .velocity(v)
                     .hasVelocity(true)
                     .build());
